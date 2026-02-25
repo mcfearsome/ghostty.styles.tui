@@ -426,7 +426,13 @@ impl CreatorState {
         let idx = self.field_index.min(self.colors.len() - 1);
         self.colors[idx] = color;
         self.unsaved = true;
-        self.palette_dirty = true;
+        if idx >= 6 {
+            self.palette_dirty = true;
+        }
+        // Auto-derive cursor/selection when bg or fg changes
+        if idx <= 1 {
+            self.auto_derive();
+        }
     }
 
     // -----------------------------------------------------------------------

@@ -1065,12 +1065,16 @@ fn handle_create_meta_input(app: &mut App, key: KeyCode) {
             KeyCode::Char('a') => {
                 // Apply to Ghostty config
                 if let Some(ref state) = app.creator_state {
-                    match export::apply_created_theme(state) {
-                        Ok(path) => {
-                            app.status_message = Some(format!("Applied to {}", path));
-                        }
-                        Err(e) => {
-                            app.status_message = Some(format!("Error: {}", e));
+                    if state.title.trim().is_empty() {
+                        app.status_message = Some("Title cannot be empty".into());
+                    } else {
+                        match export::apply_created_theme(state) {
+                            Ok(path) => {
+                                app.status_message = Some(format!("Applied to {}", path));
+                            }
+                            Err(e) => {
+                                app.status_message = Some(format!("Error: {}", e));
+                            }
                         }
                     }
                 }
@@ -1078,12 +1082,16 @@ fn handle_create_meta_input(app: &mut App, key: KeyCode) {
             KeyCode::Char('e') => {
                 // Export to file
                 if let Some(ref state) = app.creator_state {
-                    match export::export_theme(state) {
-                        Ok(path) => {
-                            app.status_message = Some(format!("Exported to {}", path));
-                        }
-                        Err(e) => {
-                            app.status_message = Some(format!("Error: {}", e));
+                    if state.title.trim().is_empty() {
+                        app.status_message = Some("Title cannot be empty".into());
+                    } else {
+                        match export::export_theme(state) {
+                            Ok(path) => {
+                                app.status_message = Some(format!("Exported to {}", path));
+                            }
+                            Err(e) => {
+                                app.status_message = Some(format!("Error: {}", e));
+                            }
                         }
                     }
                 }
@@ -1091,12 +1099,16 @@ fn handle_create_meta_input(app: &mut App, key: KeyCode) {
             KeyCode::Char('u') => {
                 // Upload
                 if let Some(ref state) = app.creator_state {
-                    match export::upload_theme(state) {
-                        Ok(msg) => {
-                            app.status_message = Some(msg);
-                        }
-                        Err(e) => {
-                            app.status_message = Some(format!("Error: {}", e));
+                    if state.title.trim().is_empty() {
+                        app.status_message = Some("Title cannot be empty".into());
+                    } else {
+                        match export::upload_theme(state) {
+                            Ok(msg) => {
+                                app.status_message = Some(msg);
+                            }
+                            Err(e) => {
+                                app.status_message = Some(format!("Error: {}", e));
+                            }
                         }
                     }
                 }

@@ -385,5 +385,13 @@ impl App {
                 preview::restore_colors(saved);
             }
         }
+        // Also check creator OSC state
+        if let Some(ref state) = self.creator_state {
+            if state.osc_preview {
+                if let Some(ref saved) = self.saved_colors {
+                    preview::restore_colors(saved);
+                }
+            }
+        }
     }
 }
