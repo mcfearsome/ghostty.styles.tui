@@ -1,6 +1,7 @@
 mod api;
 mod app;
 mod cli;
+mod collection;
 mod config;
 mod preview;
 mod theme;
