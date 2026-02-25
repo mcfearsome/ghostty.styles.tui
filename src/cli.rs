@@ -21,6 +21,12 @@ pub enum Commands {
         #[command(subcommand)]
         action: CycleAction,
     },
+    /// Create a new theme
+    Create {
+        /// Fork from an existing theme by slug
+        #[arg(long)]
+        from: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]

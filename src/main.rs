@@ -62,6 +62,9 @@ fn dispatch_command(cmd: Commands) {
                 std::process::exit(1);
             }
         }
+        Commands::Create { from } => {
+            run_tui_create(from);
+        }
     }
 }
 
@@ -271,6 +274,57 @@ fn run_tui() {
     let result = run_app(&mut terminal, &mut app);
 
     // Cleanup
+    app.cleanup();
+    disable_raw_mode().expect("Failed to disable raw mode");
+    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)
+        .expect("Failed to leave alternate screen");
+
+    if let Err(e) = result {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    }
+}
+
+fn run_tui_create(from_slug: Option<String>) {
+    let term_program = std::env::var("TERM_PROGRAM").unwrap_or_default();
+    if term_program.to_lowercase() != "ghostty" {
+        eprintln!("ghostty-styles requires the Ghostty terminal.");
+        std::process::exit(1);
+    }
+
+    let source_theme = if let Some(ref slug) = from_slug {
+        match api::fetch_config_by_id(slug) {
+            Ok(theme) => Some(theme),
+            Err(e) => {
+                eprintln!("Error fetching theme '{}': {}", slug, e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        None
+    };
+
+    enable_raw_mode().expect("Failed to enable raw mode");
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)
+        .expect("Failed to enter alternate screen");
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).expect("Failed to create terminal");
+
+    let mut app = App::new();
+    match source_theme {
+        Some(theme) => {
+            app.creator_state = Some(creator::CreatorState::from_theme(&theme));
+            app.screen = Screen::Create;
+        }
+        None => {
+            app.creator_state = Some(creator::CreatorState::new("Untitled".to_string()));
+            app.screen = Screen::Create;
+        }
+    }
+
+    let result = run_app(&mut terminal, &mut app);
+
     app.cleanup();
     disable_raw_mode().expect("Failed to disable raw mode");
     execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)
