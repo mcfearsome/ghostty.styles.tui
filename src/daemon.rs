@@ -190,7 +190,8 @@ pub fn status() -> Result<(), String> {
                     let current_theme = if coll.themes.is_empty() {
                         "(none)".to_string()
                     } else {
-                        coll.themes[coll.current_index].title.clone()
+                        let idx = coll.current_index.min(coll.themes.len() - 1);
+                        coll.themes[idx].title.clone()
                     };
 
                     println!("Collection: {}", name);

@@ -395,14 +395,17 @@ fn handle_browse_input(app: &mut App, key: KeyCode) {
         },
         InputMode::CollectionSelect => match key {
             KeyCode::Char('j') | KeyCode::Down => {
-                app.collection_popup_cursor = (app.collection_popup_cursor + 1).min(app.collection_names.len() - 1);
+                if !app.collection_names.is_empty() {
+                    app.collection_popup_cursor = (app.collection_popup_cursor + 1).min(app.collection_names.len() - 1);
+                }
             }
             KeyCode::Char('k') | KeyCode::Up => {
                 app.collection_popup_cursor = app.collection_popup_cursor.saturating_sub(1);
             }
             KeyCode::Enter => {
-                let name = app.collection_names[app.collection_popup_cursor].clone();
-                app.add_to_collection(&name);
+                if let Some(name) = app.collection_names.get(app.collection_popup_cursor).cloned() {
+                    app.add_to_collection(&name);
+                }
             }
             KeyCode::Char('n') => {
                 app.input_mode = InputMode::CollectionCreate;
@@ -651,26 +654,24 @@ fn handle_collections_theme_input(app: &mut App, key: KeyCode) {
                     if app.collections_theme_cursor < coll.themes.len() {
                         let removed = coll.themes.remove(app.collections_theme_cursor);
                         // Adjust current_index if needed
-                        if coll.current_index >= coll.themes.len() && !coll.themes.is_empty() {
+                        if coll.themes.is_empty() {
+                            coll.current_index = 0;
+                        } else if coll.current_index >= coll.themes.len() {
                             coll.current_index = coll.themes.len() - 1;
                         }
                         match collection::save_collection(&coll) {
                             Ok(()) => {
                                 app.status_message =
                                     Some(format!("Removed '{}' from '{}'", removed.title, name));
+                                // Adjust theme cursor before refreshing detail view
+                                let theme_count = coll.themes.len();
+                                if theme_count == 0 {
+                                    app.collections_theme_cursor = 0;
+                                } else if app.collections_theme_cursor >= theme_count {
+                                    app.collections_theme_cursor = theme_count - 1;
+                                }
                                 // Refresh the detail view
                                 app.collections_detail = Some(coll);
-                                if app.collections_theme_cursor > 0
-                                    && app.collections_theme_cursor
-                                        >= app
-                                            .collections_detail
-                                            .as_ref()
-                                            .map(|c| c.themes.len())
-                                            .unwrap_or(0)
-                                {
-                                    app.collections_theme_cursor =
-                                        app.collections_theme_cursor.saturating_sub(1);
-                                }
                             }
                             Err(e) => {
                                 app.status_message = Some(format!("Error: {}", e));

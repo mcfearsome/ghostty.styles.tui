@@ -17,6 +17,11 @@ pub fn apply_next() -> Result<String, String> {
         return Err(format!("Collection '{}' is empty", coll_name));
     }
 
+    // Clamp current_index in case the collection was modified externally
+    if coll.current_index >= coll.themes.len() {
+        coll.current_index = 0;
+    }
+
     let next_index = match coll.order {
         CycleOrder::Sequential => (coll.current_index + 1) % coll.themes.len(),
         CycleOrder::Shuffle => {
