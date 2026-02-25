@@ -3,6 +3,7 @@ mod app;
 mod cli;
 mod collection;
 mod config;
+mod cycling;
 mod preview;
 mod theme;
 mod ui;
@@ -35,7 +36,13 @@ fn dispatch_command(cmd: Commands) {
     match cmd {
         Commands::Collection { action } => handle_collection(action),
         Commands::Next => {
-            eprintln!("next: not yet implemented");
+            match cycling::apply_next() {
+                Ok(msg) => println!("{}", msg),
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(1);
+                }
+            }
         }
         Commands::Cycle { action } => match action {
             CycleAction::Start => {
