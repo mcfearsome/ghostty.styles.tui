@@ -347,7 +347,8 @@ fn run_app(
             Screen::Browse => ui::render_browser(f, app),
             Screen::Detail | Screen::Confirm => ui::render_detail(f, app),
             Screen::Collections => ui::render_collections(f, app),
-            Screen::Create | Screen::CreateMeta => {} // TODO: render in Task 6
+            Screen::Create => ui::render_creator(f, app),
+            Screen::CreateMeta => ui::render_create_meta(f, app),
         })?;
 
         // Poll for events with a timeout so we can check background messages

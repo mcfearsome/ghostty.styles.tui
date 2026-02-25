@@ -1,8 +1,12 @@
 mod browser;
 mod collections;
+mod create_meta;
+mod creator;
 mod details;
-mod preview;
+pub(crate) mod preview;
 
 pub use browser::render_browser;
 pub use collections::render_collections;
+pub use create_meta::render_create_meta;
+pub use creator::render_creator;
 pub use details::render_detail;
