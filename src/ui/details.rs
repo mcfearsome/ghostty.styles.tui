@@ -21,7 +21,7 @@ pub fn render_detail(f: &mut Frame, app: &App) {
     let outer = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),  // header
+            Constraint::Length(3), // header
             Constraint::Min(10),   // main content
             Constraint::Length(1), // footer
         ])
@@ -32,10 +32,16 @@ pub fn render_detail(f: &mut Frame, app: &App) {
         Span::styled(" < ", Style::default().fg(ACCENT)),
         Span::styled(
             &theme.title,
-            Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
         ),
         Span::styled(
-            theme.author_name.as_deref().map(|a| format!("  by {}", a)).unwrap_or_default(),
+            theme
+                .author_name
+                .as_deref()
+                .map(|a| format!("  by {}", a))
+                .unwrap_or_default(),
             Style::default().fg(DIM),
         ),
     ]))
@@ -45,10 +51,7 @@ pub fn render_detail(f: &mut Frame, app: &App) {
     // Main content: left info + right preview
     let main = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(50),
-            Constraint::Percentage(50),
-        ])
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(outer[1]);
 
     // Left: theme info + raw config
@@ -68,7 +71,9 @@ pub fn render_detail(f: &mut Frame, app: &App) {
         vec![
             Span::styled(
                 " Apply this theme? ",
-                Style::default().fg(Color::Rgb(255, 200, 50)).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Rgb(255, 200, 50))
+                    .add_modifier(Modifier::BOLD),
             ),
             Span::styled("y", Style::default().fg(ACCENT)),
             Span::styled("/", Style::default().fg(DIM)),
@@ -115,7 +120,9 @@ fn render_info_panel(f: &mut Frame, app: &App, area: Rect) {
         for tag in &theme.tags {
             spans.push(Span::styled(
                 format!(" {} ", tag),
-                Style::default().fg(Color::Rgb(140, 140, 160)).bg(Color::Rgb(50, 50, 70)),
+                Style::default()
+                    .fg(Color::Rgb(140, 140, 160))
+                    .bg(Color::Rgb(50, 50, 70)),
             ));
             spans.push(Span::raw(" "));
         }

@@ -17,7 +17,7 @@ pub fn render_collections(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3), // top bar
-            Constraint::Min(5),   // main
+            Constraint::Min(5),    // main
             Constraint::Length(1), // bottom bar
         ])
         .split(area);
@@ -47,10 +47,7 @@ fn render_top_bar(f: &mut Frame, area: Rect) {
                 .fg(Color::White)
                 .add_modifier(Modifier::BOLD),
         ),
-        Span::styled(
-            " / Collections",
-            Style::default().fg(DIM),
-        ),
+        Span::styled(" / Collections", Style::default().fg(DIM)),
     ]))
     .block(Block::default().borders(Borders::BOTTOM));
     f.render_widget(title, area);
@@ -76,10 +73,7 @@ fn render_main(f: &mut Frame, app: &App, area: Rect) {
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(45),
-            Constraint::Percentage(55),
-        ])
+        .constraints([Constraint::Percentage(45), Constraint::Percentage(55)])
         .split(area);
 
     render_collection_list(f, app, chunks[0]);
@@ -208,7 +202,7 @@ fn render_theme_panel(f: &mut Frame, app: &App, area: Rect) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(2), // info
-            Constraint::Min(3),   // theme list
+            Constraint::Min(3),    // theme list
         ])
         .split(area);
 
@@ -217,10 +211,7 @@ fn render_theme_panel(f: &mut Frame, app: &App, area: Rect) {
         collection::CycleOrder::Sequential => "sequential",
         collection::CycleOrder::Shuffle => "shuffle",
     };
-    let interval_str = coll
-        .interval
-        .as_deref()
-        .unwrap_or("not set");
+    let interval_str = coll.interval.as_deref().unwrap_or("not set");
     let info = Paragraph::new(Line::from(vec![
         Span::styled("  Order: ", Style::default().fg(DIM)),
         Span::styled(order_str, Style::default().fg(Color::White)),
@@ -293,11 +284,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
     } else {
         let hints: Vec<(&str, &str)> = match app.collections_mode {
             CollectionsMode::Normal if app.collections_viewing_themes => {
-                vec![
-                    ("j/k", "nav"),
-                    ("x", "remove"),
-                    ("Esc", "back"),
-                ]
+                vec![("j/k", "nav"), ("x", "remove"), ("Esc", "back")]
             }
             CollectionsMode::Normal => {
                 vec![
@@ -312,11 +299,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
                 ]
             }
             CollectionsMode::NewCollection => {
-                vec![
-                    ("type", "name"),
-                    ("Enter", "confirm"),
-                    ("Esc", "cancel"),
-                ]
+                vec![("type", "name"), ("Enter", "confirm"), ("Esc", "cancel")]
             }
             CollectionsMode::SetInterval => {
                 vec![
@@ -326,10 +309,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
                 ]
             }
             CollectionsMode::ConfirmDelete => {
-                vec![
-                    ("y", "confirm"),
-                    ("n/Esc", "cancel"),
-                ]
+                vec![("y", "confirm"), ("n/Esc", "cancel")]
             }
         };
 
@@ -338,10 +318,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
                 format!(" {} ", key),
                 Style::default().fg(ACCENT),
             ));
-            spans.push(Span::styled(
-                format!("{} ", desc),
-                Style::default().fg(DIM),
-            ));
+            spans.push(Span::styled(format!("{} ", desc), Style::default().fg(DIM)));
         }
     }
 
@@ -407,10 +384,7 @@ fn render_set_interval_popup(f: &mut Frame, app: &App, area: Rect) {
     ];
     let paragraph = Paragraph::new(lines).block(
         Block::default()
-            .title(Span::styled(
-                " Set Interval ",
-                Style::default().fg(ACCENT),
-            ))
+            .title(Span::styled(" Set Interval ", Style::default().fg(ACCENT)))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ACCENT)),
     );

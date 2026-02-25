@@ -38,8 +38,7 @@ pub fn export_theme(state: &CreatorState) -> Result<String, String> {
     let file_path = themes_dir.join(format!("{}.conf", slug));
     let raw_config = state.build_raw_config();
 
-    fs::write(&file_path, &raw_config)
-        .map_err(|e| format!("Failed to write theme file: {}", e))?;
+    fs::write(&file_path, &raw_config).map_err(|e| format!("Failed to write theme file: {}", e))?;
 
     Ok(file_path.display().to_string())
 }

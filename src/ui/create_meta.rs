@@ -195,10 +195,7 @@ pub fn render_create_meta(f: &mut Frame, app: &App) {
         Span::styled(" Upload ", Style::default().fg(DIM)),
     ]));
 
-    f.render_widget(
-        Paragraph::new(lines).wrap(Wrap { trim: false }),
-        form_inner,
-    );
+    f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: false }), form_inner);
 
     // Right panel: preview
     let preview_config = creator.build_preview_config();
@@ -237,7 +234,10 @@ pub fn render_create_meta(f: &mut Frame, app: &App) {
             spans.push(Span::styled("  ", Style::default()));
         }
         spans.push(Span::styled(*key, Style::default().fg(ACCENT)));
-        spans.push(Span::styled(format!(":{}", action), Style::default().fg(DIM)));
+        spans.push(Span::styled(
+            format!(":{}", action),
+            Style::default().fg(DIM),
+        ));
     }
     f.render_widget(Paragraph::new(Line::from(spans)), outer[2]);
 }

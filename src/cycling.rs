@@ -115,5 +115,8 @@ pub fn apply_next() -> Result<String, String> {
     let mode_label = want_dark
         .map(|d| if d { " [dark]" } else { " [light]" })
         .unwrap_or("");
-    Ok(format!("Applied '{}' from '{}'{}", theme_entry.title, coll_name, mode_label))
+    Ok(format!(
+        "Applied '{}' from '{}'{}",
+        theme_entry.title, coll_name, mode_label
+    ))
 }

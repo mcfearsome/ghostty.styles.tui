@@ -77,10 +77,7 @@ pub fn render_creator(f: &mut Frame, app: &App) {
 
 fn render_top_bar(f: &mut Frame, state: &crate::creator::CreatorState, area: Rect) {
     let mut title_spans = vec![
-        Span::styled(
-            " Create Theme: ",
-            Style::default().fg(DIM),
-        ),
+        Span::styled(" Create Theme: ", Style::default().fg(DIM)),
         Span::styled(
             &state.title,
             Style::default()
@@ -98,8 +95,8 @@ fn render_top_bar(f: &mut Frame, state: &crate::creator::CreatorState, area: Rec
         ));
     }
 
-    let title = Paragraph::new(Line::from(title_spans))
-        .block(Block::default().borders(Borders::BOTTOM));
+    let title =
+        Paragraph::new(Line::from(title_spans)).block(Block::default().borders(Borders::BOTTOM));
     f.render_widget(title, area);
 }
 
@@ -152,8 +149,7 @@ fn render_field_list(f: &mut Frame, state: &crate::creator::CreatorState, area: 
         // Truncate label to fit: "> XX label  #aabbcc"
         // Available width = inner.width
         // Format: "{indicator} {swatch} {label}  {hex}"
-        let max_label_len = (inner.width as usize)
-            .saturating_sub(2 + 2 + 2 + 8); // indicator + swatch + gap + hex
+        let max_label_len = (inner.width as usize).saturating_sub(2 + 2 + 2 + 8); // indicator + swatch + gap + hex
 
         let display_label = if label.len() > max_label_len {
             &label[..max_label_len]
@@ -186,10 +182,7 @@ fn render_field_list(f: &mut Frame, state: &crate::creator::CreatorState, area: 
     // Algorithm indicator at the bottom.
     let algo_line = Line::from(vec![
         Span::styled(" gen: ", Style::default().fg(DIM)),
-        Span::styled(
-            state.gen_algorithm.label(),
-            Style::default().fg(ACCENT),
-        ),
+        Span::styled(state.gen_algorithm.label(), Style::default().fg(ACCENT)),
     ]);
 
     // Render field lines
@@ -253,11 +246,22 @@ fn render_slider_mode(
     // Hue slider
     if y < area.y + area.height {
         let is_focused = state.slider_focus == SliderFocus::Hue;
-        render_slider_row(f, area.x, y, area.width, "H", color.h, 0.0, 360.0, is_focused, |pos| {
-            // Color at this position: vary hue, keep s/l fixed
-            let h = HslColor::new(pos, color.s, color.l.max(20.0).min(80.0));
-            h.to_ratatui_color()
-        });
+        render_slider_row(
+            f,
+            area.x,
+            y,
+            area.width,
+            "H",
+            color.h,
+            0.0,
+            360.0,
+            is_focused,
+            |pos| {
+                // Color at this position: vary hue, keep s/l fixed
+                let h = HslColor::new(pos, color.s, color.l.max(20.0).min(80.0));
+                h.to_ratatui_color()
+            },
+        );
         y += 1;
     }
 
@@ -269,10 +273,21 @@ fn render_slider_mode(
     // Saturation slider
     if y < area.y + area.height {
         let is_focused = state.slider_focus == SliderFocus::Saturation;
-        render_slider_row(f, area.x, y, area.width, "S", color.s, 0.0, 100.0, is_focused, |pos| {
-            let h = HslColor::new(color.h, pos, color.l.max(20.0).min(80.0));
-            h.to_ratatui_color()
-        });
+        render_slider_row(
+            f,
+            area.x,
+            y,
+            area.width,
+            "S",
+            color.s,
+            0.0,
+            100.0,
+            is_focused,
+            |pos| {
+                let h = HslColor::new(color.h, pos, color.l.max(20.0).min(80.0));
+                h.to_ratatui_color()
+            },
+        );
         y += 1;
     }
 
@@ -284,10 +299,21 @@ fn render_slider_mode(
     // Lightness slider
     if y < area.y + area.height {
         let is_focused = state.slider_focus == SliderFocus::Lightness;
-        render_slider_row(f, area.x, y, area.width, "L", color.l, 0.0, 100.0, is_focused, |pos| {
-            let h = HslColor::new(color.h, color.s, pos);
-            h.to_ratatui_color()
-        });
+        render_slider_row(
+            f,
+            area.x,
+            y,
+            area.width,
+            "L",
+            color.l,
+            0.0,
+            100.0,
+            is_focused,
+            |pos| {
+                let h = HslColor::new(color.h, color.s, pos);
+                h.to_ratatui_color()
+            },
+        );
         y += 1;
     }
 
@@ -374,7 +400,9 @@ fn render_hex_input_mode(
             Span::styled("  #", Style::default().fg(Color::White)),
             Span::styled(
                 &state.hex_input,
-                Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
             ),
             Span::styled("_", Style::default().fg(ACCENT)),
         ]);
@@ -472,11 +500,10 @@ fn render_slider_row<F>(
 
     // Compute the marker position
     let normalized = ((value - min) / (max - min)).clamp(0.0, 1.0);
-    let marker_pos = ((normalized * (bar_width as f64 - 1.0)).round() as usize).min(bar_width.saturating_sub(1));
+    let marker_pos =
+        ((normalized * (bar_width as f64 - 1.0)).round() as usize).min(bar_width.saturating_sub(1));
 
-    let mut spans = vec![
-        Span::styled(format!("  {}: ", label), label_style),
-    ];
+    let mut spans = vec![Span::styled(format!("  {}: ", label), label_style)];
 
     // Build the bar character by character
     for i in 0..bar_width {

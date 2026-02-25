@@ -14,3 +14,15 @@
 [2026-02-25 00:00] COMPLETE: G007 Nix Package — flake.nix with cross-platform support and devShell
 [2026-02-25 00:00] COMPLETE: G008 Debian/Ubuntu Package — cargo-deb config and release workflow job
 [2026-02-25 00:00] COMPLETE: G009 RPM Package — cargo-generate-rpm config and release workflow job
+[2026-02-25 00:00] IN_PROGRESS: G001 Theme Collection Cycling — design and plan complete, implementation starting
+[2026-02-25 00:00] NOTE: Created subtasks G010-G019 for G001 implementation plan
+[2026-02-25 00:00] COMPLETE: G010-G019 all implementation subtasks complete
+[2026-02-25 00:00] COMPLETE: G001 Theme Collection Cycling — fully implemented with CLI, daemon, shell hook, TUI collections screen
+[2026-02-25 00:00] NOTE: Created feature G020: Theme Creation
+[2026-02-25 00:00] NOTE: Created subtasks G021-G032 for G020 implementation plan
+[2026-02-25 03:15] COMPLETE: G020 Theme Creation - all 12 subtasks implemented
+[2026-02-25 03:15] COMPLETE: G021-G032 subtasks: data model, export, app state, CLI, mouse capture, UI rendering, keyboard input, mouse input, metadata screen, keybinding hints, integration polish, documentation
+[2026-02-25 03:30] IN_PROGRESS: G002 Light/Dark Mode Awareness — design and plan complete, implementation starting
+[2026-02-25 03:30] NOTE: Created subtasks G033-G039 for G002 implementation plan
+[2026-02-25 18:30] COMPLETE: G033-G039 all subtasks for dark/light mode awareness
+[2026-02-25 18:30] COMPLETE: G002 Light/Dark Mode Awareness - full implementation with OS detection, time-of-day, cycling, daemon, CLI, TUI integration

@@ -2,19 +2,21 @@
   {
     "id": "G001",
     "title": "Theme Collection Cycling",
-    "status": "new",
+    "status": "complete",
     "priority": 1,
     "dependencies": [],
     "notes": [
       "Created 2026-02-25",
       "Define a collection of themes that cycle automatically on a timed interval or on new tab open",
-      "Needs UI for managing the collection and configuring cycle trigger (interval vs new tab)"
+      "Needs UI for managing the collection and configuring cycle trigger (interval vs new tab)",
+      "2026-02-25: Design and plan complete. Implementation starting.",
+      "2026-02-25: All 10 subtasks complete. Theme collection cycling fully implemented."
     ]
   },
   {
     "id": "G002",
     "title": "Light/Dark Mode Awareness",
-    "status": "new",
+    "status": "complete",
     "priority": 2,
     "dependencies": ["G001"],
     "notes": [
@@ -22,7 +24,9 @@
       "Filter theme cycle collection based on light/dark mode",
       "Respect system-level and app-level light/dark settings",
       "Support modes: light-only, dark-only, time-of-day-based auto switching",
-      "Settings controllable at both app and system level"
+      "Settings controllable at both app and system level",
+      "2026-02-25: Design and plan complete. Implementation starting.",
+      "Completed 2026-02-25"
     ]
   },
   {
@@ -112,6 +116,398 @@
       "Generate .rpm packages via cargo-generate-rpm",
       "Attach as GitHub release assets in CI",
       "2026-02-25: Status changed to complete — cargo-generate-rpm metadata in Cargo.toml, rpm job in release workflow"
+    ]
+  },
+  {
+    "id": "G010",
+    "title": "G001: CLI skeleton with clap subcommands",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": [],
+    "notes": [
+      "Created 2026-02-25",
+      "Add clap dependency, create cli.rs, update main.rs to dispatch subcommands",
+      "Plan task 1",
+      "2026-02-25: Complete — clap CLI skeleton with subcommands"
+    ]
+  },
+  {
+    "id": "G011",
+    "title": "G001: Collection data model and persistence",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G010"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create collection.rs with CRUD, data model, file I/O for ~/.config/ghostty-styles/",
+      "Plan task 2",
+      "2026-02-25: Complete — collection.rs with CRUD and persistence"
+    ]
+  },
+  {
+    "id": "G012",
+    "title": "G001: Collection CLI commands",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G011"],
+    "notes": [
+      "Created 2026-02-25",
+      "Implement create/list/show/add/use/delete subcommands",
+      "Plan task 3",
+      "2026-02-25: Complete — all collection CLI commands working"
+    ]
+  },
+  {
+    "id": "G013",
+    "title": "G001: Next command (cycling logic)",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G012"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create cycling.rs with sequential and shuffle next-theme logic",
+      "Plan task 4",
+      "2026-02-25: Complete — cycling.rs with sequential and shuffle logic"
+    ]
+  },
+  {
+    "id": "G014",
+    "title": "G001: Cycling daemon (start/stop/status)",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G013"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create daemon.rs with fork, PID file, signal handling, cycle loop",
+      "Plan task 5",
+      "2026-02-25: Complete — daemon.rs with start/stop/status"
+    ]
+  },
+  {
+    "id": "G015",
+    "title": "G001: Shell hook installer",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G013"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create shell_hook.rs to detect shell and install snippet in .zshrc/.bashrc",
+      "Plan task 6",
+      "2026-02-25: Complete — shell_hook.rs with zsh/bash detection"
+    ]
+  },
+  {
+    "id": "G016",
+    "title": "G001: TUI add-to-collection keybinding",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G012"],
+    "notes": [
+      "Created 2026-02-25",
+      "Add 'c' keybinding on Browse/Detail to add themes to collections",
+      "Plan task 7",
+      "2026-02-25: Complete — c keybinding with collection popup"
+    ]
+  },
+  {
+    "id": "G017",
+    "title": "G001: TUI Collections screen",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G016"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create ui/collections.rs with full collection management screen",
+      "Plan task 8",
+      "2026-02-25: Complete — full Collections screen with two-panel layout"
+    ]
+  },
+  {
+    "id": "G018",
+    "title": "G001: Integration testing and polish",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G014", "G015", "G017"],
+    "notes": [
+      "Created 2026-02-25",
+      "End-to-end testing of CLI and TUI workflows, edge case handling",
+      "Plan task 9",
+      "2026-02-25: Complete — edge case fixes for stale index bounds"
+    ]
+  },
+  {
+    "id": "G019",
+    "title": "G001: Update documentation",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G018"],
+    "notes": [
+      "Created 2026-02-25",
+      "Update CLAUDE.md and README.md with new modules and CLI reference",
+      "Plan task 10",
+      "2026-02-25: Complete — CLAUDE.md and README.md updated"
+    ]
+  },
+  {
+    "id": "G020",
+    "title": "Theme Creation",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": [],
+    "notes": [
+      "Created 2026-02-25",
+      "Full-screen theme creator with HSL color picker, mouse support, palette auto-generation",
+      "Create from scratch or fork existing themes",
+      "Export, apply, or upload to ghostty-style website",
+      "2026-02-25: Design and plan complete. Implementation starting.",
+      "2026-02-25: All 12 subtasks complete. Theme creator with HSL picker, mouse support, palette generation, metadata screen, export/upload."
+    ]
+  },
+  {
+    "id": "G021",
+    "title": "G020: CreatorState data model and HSL math",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": [],
+    "notes": [
+      "Created 2026-02-25",
+      "Create creator.rs with HslColor, ColorField, CreatorState, HSL\u2194Hex conversion, palette generation",
+      "Plan task 1",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G022",
+    "title": "G020: Export module",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G021"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create export.rs with save to .conf file, apply to Ghostty config, open browser for upload",
+      "Plan task 2",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G023",
+    "title": "G020: App state changes",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G021"],
+    "notes": [
+      "Created 2026-02-25",
+      "Add Screen::Create, Screen::CreateMeta, CreatorState field, entry methods to app.rs",
+      "Plan task 3",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G024",
+    "title": "G020: CLI create command",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G023"],
+    "notes": [
+      "Created 2026-02-25",
+      "Add Create command to cli.rs with --from flag, run_tui_create in main.rs",
+      "Plan task 4",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G025",
+    "title": "G020: Mouse capture and event routing",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G023"],
+    "notes": [
+      "Created 2026-02-25",
+      "Enable MouseCapture, route mouse/key events, remap pagination keys, add n/f keybindings",
+      "Plan task 5",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G026",
+    "title": "G020: Creator screen rendering",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G023"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create ui/creator.rs with three-column layout, HSL sliders, field list, preview",
+      "Plan task 6",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G027",
+    "title": "G020: Creator keyboard input",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G025", "G026"],
+    "notes": [
+      "Created 2026-02-25",
+      "Implement handle_create_input with slider adjustment, hex input, generation toggle, OSC preview",
+      "Plan task 7",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G028",
+    "title": "G020: Creator mouse input",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G026"],
+    "notes": [
+      "Created 2026-02-25",
+      "Implement handle_create_mouse with field clicks and slider dragging",
+      "Plan task 8",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G029",
+    "title": "G020: Metadata screen and input",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G022", "G027"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create ui/create_meta.rs, CreateMetaState, handle_create_meta_input with tag selection and export actions",
+      "Plan task 9",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G030",
+    "title": "G020: Browse/Detail keybinding hints",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G025"],
+    "notes": [
+      "Created 2026-02-25",
+      "Update browser.rs and details.rs bottom bars with n:new, f:fork, ]/[:page hints",
+      "Plan task 10",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G031",
+    "title": "G020: Integration polish and edge cases",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G028", "G029", "G030"],
+    "notes": [
+      "Created 2026-02-25",
+      "Auto-derive cursor/selection on bg/fg change, title validation, OSC cleanup, scroll bounds",
+      "Plan task 11",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G032",
+    "title": "G020: Update documentation",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G031"],
+    "notes": [
+      "Created 2026-02-25",
+      "Update CLAUDE.md and README.md with new modules, screens, CLI, and keybindings",
+      "Plan task 12",
+      "2026-02-25: Complete"
+    ]
+  },
+  {
+    "id": "G033",
+    "title": "G002: AppConfig mode preference and CLI subcommand",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": [],
+    "notes": [
+      "Created 2026-02-25",
+      "Add ModePreference enum to collection.rs, update AppConfig with mode_preference/dark_after/light_after, add Mode subcommand to cli.rs",
+      "Plan task 1",
+      "Completed 2026-02-25"
+    ]
+  },
+  {
+    "id": "G034",
+    "title": "G002: OS dark mode detection (darkmode.rs)",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G033"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create darkmode.rs with detect_current(), spawn_watcher(), resolve_mode(), time-of-day resolution",
+      "Plan task 2",
+      "Completed 2026-02-25"
+    ]
+  },
+  {
+    "id": "G035",
+    "title": "G002: Mode-aware cycling",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G034"],
+    "notes": [
+      "Created 2026-02-25",
+      "Update cycling::apply_next() to filter themes by resolved mode preference",
+      "Plan task 3",
+      "Completed 2026-02-25"
+    ]
+  },
+  {
+    "id": "G036",
+    "title": "G002: Daemon watcher integration",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G034"],
+    "notes": [
+      "Created 2026-02-25",
+      "Replace daemon sleep loop with select over OS watcher channel, interval timer, and time boundary timer",
+      "Plan task 4",
+      "Completed 2026-02-25"
+    ]
+  },
+  {
+    "id": "G037",
+    "title": "G002: CLI mode command handler",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G034"],
+    "notes": [
+      "Created 2026-02-25",
+      "Wire up Mode subcommand dispatch in main.rs with set/status/off actions",
+      "Plan task 5",
+      "Completed 2026-02-25"
+    ]
+  },
+  {
+    "id": "G038",
+    "title": "G002: TUI mode keybinding and browse integration",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G035"],
+    "notes": [
+      "Created 2026-02-25",
+      "Add m keybinding to cycle mode, mode indicator in top bar, override d key when mode active",
+      "Plan task 6",
+      "Completed 2026-02-25"
+    ]
+  },
+  {
+    "id": "G039",
+    "title": "G002: Update documentation",
+    "status": "complete",
+    "priority": 1,
+    "dependencies": ["G038"],
+    "notes": [
+      "Created 2026-02-25",
+      "Update CLAUDE.md and README.md with darkmode module, mode CLI, and m keybinding",
+      "Plan task 7",
+      "Completed 2026-02-25"
     ]
   }
 ]

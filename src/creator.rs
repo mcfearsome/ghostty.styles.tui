@@ -350,30 +350,23 @@ impl CreatorState {
 
         let bg = parse(&config.background);
         let fg = parse(&config.foreground);
-        let cursor_color = config
-            .cursor_color
-            .as_deref()
-            .map(parse)
-            .unwrap_or(fg);
-        let cursor_text = config
-            .cursor_text
-            .as_deref()
-            .map(parse)
-            .unwrap_or(bg);
+        let cursor_color = config.cursor_color.as_deref().map(parse).unwrap_or(fg);
+        let cursor_text = config.cursor_text.as_deref().map(parse).unwrap_or(bg);
         let selection_bg = config
             .selection_bg
             .as_deref()
             .map(parse)
-            .unwrap_or_else(|| {
-                HslColor::new(bg.h, bg.s.min(30.0), (bg.l + 15.0).min(100.0))
-            });
-        let selection_fg = config
-            .selection_fg
-            .as_deref()
-            .map(parse)
-            .unwrap_or(fg);
+            .unwrap_or_else(|| HslColor::new(bg.h, bg.s.min(30.0), (bg.l + 15.0).min(100.0)));
+        let selection_fg = config.selection_fg.as_deref().map(parse).unwrap_or(fg);
 
-        let mut colors = vec![bg, fg, cursor_color, cursor_text, selection_bg, selection_fg];
+        let mut colors = vec![
+            bg,
+            fg,
+            cursor_color,
+            cursor_text,
+            selection_bg,
+            selection_fg,
+        ];
 
         // Parse palette colors 0..15
         for i in 0..16 {
@@ -591,15 +584,16 @@ impl CreatorState {
 
     /// Build a `GhosttyConfig` suitable for passing to the `ThemePreview` widget.
     pub fn build_preview_config(&self) -> GhosttyConfig {
-        let palette: Vec<String> = (0..16)
-            .map(|i| self.colors[6 + i].to_hex())
-            .collect();
+        let palette: Vec<String> = (0..16).map(|i| self.colors[6 + i].to_hex()).collect();
 
         GhosttyConfig {
             id: String::new(),
             slug: self.slug_from_title(),
             title: self.title.clone(),
-            description: self.forked_from.as_ref().map(|s| format!("Forked from {}", s)),
+            description: self
+                .forked_from
+                .as_ref()
+                .map(|s| format!("Forked from {}", s)),
             raw_config: self.build_raw_config(),
             background: self.colors[0].to_hex(),
             foreground: self.colors[1].to_hex(),
@@ -632,8 +626,14 @@ impl CreatorState {
         lines.push(format!("foreground = {}", self.colors[1].to_hex()));
         lines.push(format!("cursor-color = {}", self.colors[2].to_hex()));
         lines.push(format!("cursor-text = {}", self.colors[3].to_hex()));
-        lines.push(format!("selection-background = {}", self.colors[4].to_hex()));
-        lines.push(format!("selection-foreground = {}", self.colors[5].to_hex()));
+        lines.push(format!(
+            "selection-background = {}",
+            self.colors[4].to_hex()
+        ));
+        lines.push(format!(
+            "selection-foreground = {}",
+            self.colors[5].to_hex()
+        ));
 
         for i in 0..16 {
             lines.push(format!("palette = {}={}", i, self.colors[6 + i].to_hex()));

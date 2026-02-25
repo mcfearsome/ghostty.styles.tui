@@ -31,7 +31,10 @@ impl<'a> Widget for ThemePreview<'a> {
             let title = format!(" {} ", theme.title);
             let line = Line::from(vec![Span::styled(
                 &title,
-                Style::default().fg(fg).bg(bg).add_modifier(ratatui::style::Modifier::BOLD),
+                Style::default()
+                    .fg(fg)
+                    .bg(bg)
+                    .add_modifier(ratatui::style::Modifier::BOLD),
             )]);
             buf.set_line(area.x + 1, y, &line, area.width.saturating_sub(2));
             y += 1;
@@ -87,15 +90,15 @@ impl<'a> Widget for ThemePreview<'a> {
 
         // Sample terminal output
         let samples: Vec<(&str, usize)> = vec![
-            ("$ ls -la", 2),       // green
-            ("README.md", 4),      // blue
-            ("Cargo.toml", 3),     // yellow
-            ("src/", 6),           // cyan
-            ("$ git status", 2),   // green
+            ("$ ls -la", 2),          // green
+            ("README.md", 4),         // blue
+            ("Cargo.toml", 3),        // yellow
+            ("src/", 6),              // cyan
+            ("$ git status", 2),      // green
             ("modified: main.rs", 1), // red
-            ("$ cargo build", 5),  // magenta
-            ("Compiling...", 3),   // yellow
-            ("Finished OK", 2),    // green
+            ("$ cargo build", 5),     // magenta
+            ("Compiling...", 3),      // yellow
+            ("Finished OK", 2),       // green
         ];
 
         for (text, color_idx) in &samples {
@@ -117,10 +120,7 @@ impl<'a> Widget for ThemePreview<'a> {
         }
 
         // Color info
-        let color_infos: Vec<(&str, Color)> = vec![
-            ("BG", bg),
-            ("FG", fg),
-        ];
+        let color_infos: Vec<(&str, Color)> = vec![("BG", bg), ("FG", fg)];
         if y < area.y + area.height {
             let mut spans = vec![Span::styled(" ", Style::default().bg(bg))];
             for (label, color) in &color_infos {

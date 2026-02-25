@@ -58,11 +58,16 @@ impl Default for FetchParams {
 
 pub fn fetch_configs(params: &FetchParams) -> Result<ConfigResponse, String> {
     let client = reqwest::blocking::Client::new();
-    let mut url = format!("{}?sort={}&page={}", BASE_URL, params.sort.as_str(), params.page);
+    let mut url = format!(
+        "{}?sort={}&page={}",
+        BASE_URL,
+        params.sort.as_str(),
+        params.page
+    );
 
     if let Some(ref q) = params.query {
         if !q.is_empty() {
-            url.push_str(&format!("&q={}", urlencoding(&q)));
+            url.push_str(&format!("&q={}", urlencoding(q)));
         }
     }
     if let Some(ref tag) = params.tag {
@@ -118,4 +123,60 @@ fn urlencoding(s: &str) -> String {
         }
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sort_order_as_str() {
+        assert_eq!(SortOrder::Popular.as_str(), "popular");
+        assert_eq!(SortOrder::Newest.as_str(), "newest");
+        assert_eq!(SortOrder::Trending.as_str(), "trending");
+    }
+
+    #[test]
+    fn sort_order_label() {
+        assert_eq!(SortOrder::Popular.label(), "Popular");
+        assert_eq!(SortOrder::Newest.label(), "Newest");
+        assert_eq!(SortOrder::Trending.label(), "Trending");
+    }
+
+    #[test]
+    fn sort_order_next_cycles() {
+        assert_eq!(SortOrder::Popular.next(), SortOrder::Newest);
+        assert_eq!(SortOrder::Newest.next(), SortOrder::Trending);
+        assert_eq!(SortOrder::Trending.next(), SortOrder::Popular);
+    }
+
+    #[test]
+    fn fetch_params_default() {
+        let p = FetchParams::default();
+        assert!(p.query.is_none());
+        assert!(p.tag.is_none());
+        assert_eq!(p.sort, SortOrder::Popular);
+        assert_eq!(p.page, 1);
+        assert!(p.dark.is_none());
+    }
+
+    #[test]
+    fn urlencoding_spaces() {
+        assert_eq!(urlencoding("hello world"), "hello%20world");
+    }
+
+    #[test]
+    fn urlencoding_special_chars() {
+        assert_eq!(urlencoding("a&b=c"), "a%26b%3Dc");
+    }
+
+    #[test]
+    fn urlencoding_passthrough() {
+        assert_eq!(urlencoding("abc-123_test.v2~ok"), "abc-123_test.v2~ok");
+    }
+
+    #[test]
+    fn urlencoding_empty() {
+        assert_eq!(urlencoding(""), "");
+    }
 }

@@ -59,8 +59,8 @@ pub fn start() -> Result<(), String> {
 
     // Check for existing daemon
     if pid_file.exists() {
-        let contents = fs::read_to_string(&pid_file)
-            .map_err(|e| format!("Failed to read PID file: {}", e))?;
+        let contents =
+            fs::read_to_string(&pid_file).map_err(|e| format!("Failed to read PID file: {}", e))?;
         let existing_pid: i32 = contents
             .trim()
             .parse()
@@ -85,13 +85,10 @@ pub fn start() -> Result<(), String> {
 
     let coll = collection::load_collection(&coll_name)?;
 
-    let interval_str = coll
-        .interval
-        .as_deref()
-        .ok_or(format!(
-            "Collection '{}' has no interval set. Set one before starting the daemon.",
-            coll_name
-        ))?;
+    let interval_str = coll.interval.as_deref().ok_or(format!(
+        "Collection '{}' has no interval set. Set one before starting the daemon.",
+        coll_name
+    ))?;
 
     let interval = parse_interval(interval_str)?;
 
@@ -194,8 +191,8 @@ pub fn stop() -> Result<(), String> {
         return Err("No daemon is running (PID file not found)".to_string());
     }
 
-    let contents = fs::read_to_string(&pid_file)
-        .map_err(|e| format!("Failed to read PID file: {}", e))?;
+    let contents =
+        fs::read_to_string(&pid_file).map_err(|e| format!("Failed to read PID file: {}", e))?;
     let pid: i32 = contents
         .trim()
         .parse()
@@ -223,8 +220,8 @@ pub fn status() -> Result<(), String> {
     let pid_file = collection::pid_path();
 
     if pid_file.exists() {
-        let contents = fs::read_to_string(&pid_file)
-            .map_err(|e| format!("Failed to read PID file: {}", e))?;
+        let contents =
+            fs::read_to_string(&pid_file).map_err(|e| format!("Failed to read PID file: {}", e))?;
         let pid: i32 = contents
             .trim()
             .parse()
@@ -242,32 +239,30 @@ pub fn status() -> Result<(), String> {
     // Print active collection info
     let app_config = collection::load_config();
     match app_config.active_collection {
-        Some(name) => {
-            match collection::load_collection(&name) {
-                Ok(coll) => {
-                    let order_str = match coll.order {
-                        collection::CycleOrder::Sequential => "sequential",
-                        collection::CycleOrder::Shuffle => "shuffle",
-                    };
-                    let interval_str = coll.interval.as_deref().unwrap_or("not set");
-                    let current_theme = if coll.themes.is_empty() {
-                        "(none)".to_string()
-                    } else {
-                        let idx = coll.current_index.min(coll.themes.len() - 1);
-                        coll.themes[idx].title.clone()
-                    };
+        Some(name) => match collection::load_collection(&name) {
+            Ok(coll) => {
+                let order_str = match coll.order {
+                    collection::CycleOrder::Sequential => "sequential",
+                    collection::CycleOrder::Shuffle => "shuffle",
+                };
+                let interval_str = coll.interval.as_deref().unwrap_or("not set");
+                let current_theme = if coll.themes.is_empty() {
+                    "(none)".to_string()
+                } else {
+                    let idx = coll.current_index.min(coll.themes.len() - 1);
+                    coll.themes[idx].title.clone()
+                };
 
-                    println!("Collection: {}", name);
-                    println!("Themes:     {}", coll.themes.len());
-                    println!("Order:      {}", order_str);
-                    println!("Interval:   {}", interval_str);
-                    println!("Current:    {}", current_theme);
-                }
-                Err(e) => {
-                    println!("Collection: {} (error: {})", name, e);
-                }
+                println!("Collection: {}", name);
+                println!("Themes:     {}", coll.themes.len());
+                println!("Order:      {}", order_str);
+                println!("Interval:   {}", interval_str);
+                println!("Current:    {}", current_theme);
             }
-        }
+            Err(e) => {
+                println!("Collection: {} (error: {})", name, e);
+            }
+        },
         None => {
             println!("Collection: (none active)");
         }

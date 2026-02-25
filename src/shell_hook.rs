@@ -61,7 +61,11 @@ pub fn prompt_install() -> bool {
         return true;
     }
 
-    print!("Install shell hook in {} ({})? [y/N] ", rc_path.display(), shell_name);
+    print!(
+        "Install shell hook in {} ({})? [y/N] ",
+        rc_path.display(),
+        shell_name
+    );
     let _ = io::stdout().flush();
 
     let mut input = String::new();
@@ -69,7 +73,10 @@ pub fn prompt_install() -> bool {
         if input.trim().eq_ignore_ascii_case("y") {
             match install(&rc_path) {
                 Ok(_) => {
-                    println!("Hook installed. Restart your shell or run: source {}", rc_path.display());
+                    println!(
+                        "Hook installed. Restart your shell or run: source {}",
+                        rc_path.display()
+                    );
                     return true;
                 }
                 Err(e) => {

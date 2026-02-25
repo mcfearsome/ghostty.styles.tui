@@ -1,7 +1,10 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "ghostty-styles", about = "Browse, preview, and cycle Ghostty themes")]
+#[command(
+    name = "ghostty-styles",
+    about = "Browse, preview, and cycle Ghostty themes"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
