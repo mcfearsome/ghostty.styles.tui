@@ -62,6 +62,8 @@ Must be run inside a Ghostty terminal session.
 | `a` | Apply theme to config |
 | `n` / `N` | Next/previous page |
 | `r` | Refresh |
+| `c` | Add to collection |
+| `C` | Manage collections |
 | `q` / `Esc` | Quit |
 
 #### Detail screen
@@ -83,6 +85,60 @@ When you apply a theme, `ghostty-styles` will:
 Config file locations:
 - **macOS:** `~/Library/Application Support/com.mitchellh.ghostty/config`
 - **Linux:** `~/.config/ghostty/config`
+
+### Collections
+
+Create named collections of themes to cycle through:
+
+```sh
+# Create a collection
+ghostty-styles collection create my-themes
+
+# Add themes (by slug from the API)
+ghostty-styles collection add my-themes catppuccin-mocha
+
+# Or add themes from the TUI — press 'c' while browsing
+
+# Set a collection as active
+ghostty-styles collection use my-themes
+
+# List collections
+ghostty-styles collection list
+
+# Show collection details
+ghostty-styles collection show my-themes
+```
+
+Press `C` in the TUI to manage collections (reorder, set interval, toggle shuffle, remove themes).
+
+### Theme Cycling
+
+Cycle through themes in your active collection:
+
+```sh
+# Apply the next theme
+ghostty-styles next
+
+# Start automatic cycling (uses collection's interval)
+ghostty-styles cycle start
+
+# Check daemon status
+ghostty-styles cycle status
+
+# Stop the daemon
+ghostty-styles cycle stop
+```
+
+#### Shell Hook
+
+For automatic theme switching on new tabs/windows, add this to your shell rc file (or let `ghostty-styles collection create` install it for you):
+
+```sh
+# ghostty-styles theme cycling
+if command -v ghostty-styles &>/dev/null && [ "$TERM_PROGRAM" = "ghostty" ]; then
+  ghostty-styles next 2>/dev/null
+fi
+```
 
 ## License
 
