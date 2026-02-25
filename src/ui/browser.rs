@@ -253,7 +253,8 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
             ("a", "apply"),
             ("c", "collect"),
             ("C", "collections"),
-            ("n/N", "page"),
+            ("]/[", "page"),
+            ("n", "new"),
             ("q", "quit"),
         ];
         for (key, desc) in hints {

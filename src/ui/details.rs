@@ -84,6 +84,8 @@ pub fn render_detail(f: &mut Frame, app: &App) {
             Span::styled(" apply  ", Style::default().fg(DIM)),
             Span::styled("c", Style::default().fg(ACCENT)),
             Span::styled(" collect  ", Style::default().fg(DIM)),
+            Span::styled("f", Style::default().fg(ACCENT)),
+            Span::styled(" fork  ", Style::default().fg(DIM)),
         ]
     };
     let footer = Paragraph::new(Line::from(footer_spans));
