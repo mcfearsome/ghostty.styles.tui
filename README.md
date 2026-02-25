@@ -16,6 +16,13 @@ Requires the Ghostty terminal to run.
 
 ## Install
 
+### Homebrew
+
+```sh
+brew tap mcfearsome/tap
+brew install ghostty-styles
+```
+
 ### From source
 
 ```sh
