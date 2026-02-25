@@ -41,13 +41,14 @@
   {
     "id": "G004",
     "title": "Homebrew Installation",
-    "status": "new",
+    "status": "complete",
     "priority": 4,
     "dependencies": ["G003"],
     "notes": [
       "Created 2026-02-25",
       "Create Homebrew formula for easy installation",
-      "Needs README and license in place first"
+      "Needs README and license in place first",
+      "2026-02-25: Status changed to complete — release workflow, v0.1.0 tag, formula in mcfearsome/homebrew-tap"
     ]
   },
   {
@@ -59,6 +60,58 @@
     "notes": [
       "Created 2026-02-25",
       "Add test suite and continuous integration pipeline"
+    ]
+  },
+  {
+    "id": "G006",
+    "title": "Publish to crates.io",
+    "status": "complete",
+    "priority": 6,
+    "dependencies": ["G003"],
+    "notes": [
+      "Created 2026-02-25",
+      "Publish to crates.io for cargo install ghostty-styles",
+      "Add repository, categories, keywords to Cargo.toml",
+      "2026-02-25: Status changed to complete — Cargo.toml metadata added (repository, keywords, categories, readme, authors). Still needs cargo publish to go live."
+    ]
+  },
+  {
+    "id": "G007",
+    "title": "Nix Package",
+    "status": "complete",
+    "priority": 7,
+    "dependencies": ["G003"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create Nix flake or package derivation",
+      "Strong overlap between Ghostty and Nix user base",
+      "2026-02-25: Status changed to complete — flake.nix with cross-platform support, devShell, .envrc for direnv"
+    ]
+  },
+  {
+    "id": "G008",
+    "title": "Debian/Ubuntu Package (.deb)",
+    "status": "complete",
+    "priority": 8,
+    "dependencies": ["G003"],
+    "notes": [
+      "Created 2026-02-25",
+      "Generate .deb packages via cargo-deb",
+      "Attach as GitHub release assets in CI",
+      "2026-02-25: Status changed to complete — cargo-deb metadata in Cargo.toml, deb-package job in release workflow"
+    ]
+  },
+  {
+    "id": "G009",
+    "title": "RPM Package (Fedora/RHEL)",
+    "status": "complete",
+    "priority": 9,
+    "dependencies": ["G003"],
+    "notes": [
+      "Created 2026-02-25",
+      "Generate .rpm packages via cargo-generate-rpm",
+      "Attach as GitHub release assets in CI",
+      "2026-02-25: Status changed to complete — cargo-generate-rpm metadata in Cargo.toml, rpm job in release workflow"
     ]
   }
 ]

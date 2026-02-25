@@ -5,3 +5,12 @@
 [2026-02-25 00:00] NOTE: Created feature G004: Homebrew Installation (depends on G003)
 [2026-02-25 00:00] NOTE: Created feature G005: Tests and CI (depends on G003)
 [2026-02-25 00:00] COMPLETE: G003 README and License — added README.md, LICENSE (MIT), Cargo.toml license field
+[2026-02-25 00:00] COMPLETE: G004 Homebrew Installation — release workflow, v0.1.0 tagged, formula in mcfearsome/homebrew-tap
+[2026-02-25 00:00] NOTE: Created feature G006: Publish to crates.io
+[2026-02-25 00:00] NOTE: Created feature G007: Nix Package
+[2026-02-25 00:00] NOTE: Created feature G008: Debian/Ubuntu Package (.deb)
+[2026-02-25 00:00] NOTE: Created feature G009: RPM Package (Fedora/RHEL)
+[2026-02-25 00:00] COMPLETE: G006 Publish to crates.io — Cargo.toml metadata added, needs cargo publish
+[2026-02-25 00:00] COMPLETE: G007 Nix Package — flake.nix with cross-platform support and devShell
+[2026-02-25 00:00] COMPLETE: G008 Debian/Ubuntu Package — cargo-deb config and release workflow job
+[2026-02-25 00:00] COMPLETE: G009 RPM Package — cargo-generate-rpm config and release workflow job
