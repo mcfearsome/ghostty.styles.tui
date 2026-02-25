@@ -1,0 +1,14 @@
+[package]
+name = "ghostty-styles-tui"
+version = "0.1.0"
+edition = "2021"
+description = "A TUI for browsing and previewing Ghostty terminal themes"
+
+[dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+reqwest = { version = "0.12", features = ["blocking", "json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+dirs = "6"
+unicode-width = "0.2"
