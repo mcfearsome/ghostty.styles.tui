@@ -24,6 +24,15 @@ pub enum Screen {
     Browse,
     Detail,
     Confirm,
+    Collections,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum CollectionsMode {
+    Normal,
+    NewCollection,
+    SetInterval,
+    ConfirmDelete,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -65,6 +74,13 @@ pub struct App {
     pub collection_names: Vec<String>,
     pub collection_popup_cursor: usize,
     pub collection_name_input: String,
+    pub collections_list: Vec<String>,
+    pub collections_cursor: usize,
+    pub collections_detail: Option<crate::collection::Collection>,
+    pub collections_theme_cursor: usize,
+    pub collections_viewing_themes: bool,
+    pub collections_mode: CollectionsMode,
+    pub collections_input: String,
 }
 
 impl App {
@@ -96,6 +112,13 @@ impl App {
             collection_names: Vec::new(),
             collection_popup_cursor: 0,
             collection_name_input: String::new(),
+            collections_list: Vec::new(),
+            collections_cursor: 0,
+            collections_detail: None,
+            collections_theme_cursor: 0,
+            collections_viewing_themes: false,
+            collections_mode: CollectionsMode::Normal,
+            collections_input: String::new(),
         }
     }
 
@@ -285,6 +308,33 @@ impl App {
             Err(e) => {
                 self.status_message = Some(format!("Error: {}", e));
                 self.input_mode = InputMode::Normal;
+            }
+        }
+    }
+
+    pub fn enter_collections(&mut self) {
+        self.collections_list = crate::collection::list_collections();
+        self.collections_cursor = 0;
+        self.collections_viewing_themes = false;
+        self.collections_detail = None;
+        self.collections_mode = CollectionsMode::Normal;
+        self.collections_input.clear();
+        self.screen = Screen::Collections;
+    }
+
+    pub fn refresh_collections(&mut self) {
+        self.collections_list = crate::collection::list_collections();
+        if self.collections_cursor >= self.collections_list.len() {
+            self.collections_cursor = self.collections_list.len().saturating_sub(1);
+        }
+    }
+
+    pub fn load_selected_collection(&mut self) {
+        if let Some(name) = self.collections_list.get(self.collections_cursor) {
+            if let Ok(coll) = crate::collection::load_collection(name) {
+                self.collections_detail = Some(coll);
+                self.collections_theme_cursor = 0;
+                self.collections_viewing_themes = true;
             }
         }
     }

@@ -22,7 +22,7 @@ use crossterm::terminal::{
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 
-use app::{App, InputMode, Screen};
+use app::{App, CollectionsMode, InputMode, Screen};
 use cli::{Cli, Commands, CollectionAction};
 
 fn main() {
@@ -287,6 +287,7 @@ fn run_app(
         terminal.draw(|f| match app.screen {
             Screen::Browse => ui::render_browser(f, app),
             Screen::Detail | Screen::Confirm => ui::render_detail(f, app),
+            Screen::Collections => ui::render_collections(f, app),
         })?;
 
         // Poll for events with a timeout so we can check background messages
@@ -309,6 +310,7 @@ fn run_app(
                     Screen::Browse => handle_browse_input(app, key.code),
                     Screen::Detail => handle_detail_input(app, key.code),
                     Screen::Confirm => handle_confirm_input(app, key.code),
+                    Screen::Collections => handle_collections_input(app, key.code),
                 }
             }
         }
@@ -383,6 +385,9 @@ fn handle_browse_input(app: &mut App, key: KeyCode) {
                     app.open_collection_popup();
                 }
             }
+            KeyCode::Char('C') => {
+                app.enter_collections();
+            }
             KeyCode::Char('r') => {
                 app.trigger_fetch();
             }
@@ -449,6 +454,235 @@ fn handle_confirm_input(app: &mut App, key: KeyCode) {
         }
         KeyCode::Char('n') | KeyCode::Esc => {
             app.screen = Screen::Detail;
+        }
+        _ => {}
+    }
+}
+
+fn handle_collections_input(app: &mut App, key: KeyCode) {
+    match app.collections_mode {
+        CollectionsMode::Normal => {
+            if app.collections_viewing_themes {
+                handle_collections_theme_input(app, key);
+            } else {
+                handle_collections_list_input(app, key);
+            }
+        }
+        CollectionsMode::NewCollection => match key {
+            KeyCode::Enter => {
+                let name = app.collections_input.trim().to_string();
+                if !name.is_empty() {
+                    match collection::create_collection(&name) {
+                        Ok(_) => {
+                            app.status_message = Some(format!("Created collection '{}'", name));
+                            app.refresh_collections();
+                        }
+                        Err(e) => {
+                            app.status_message = Some(format!("Error: {}", e));
+                        }
+                    }
+                }
+                app.collections_mode = CollectionsMode::Normal;
+                app.collections_input.clear();
+            }
+            KeyCode::Esc => {
+                app.collections_mode = CollectionsMode::Normal;
+                app.collections_input.clear();
+            }
+            KeyCode::Backspace => {
+                app.collections_input.pop();
+            }
+            KeyCode::Char(c) => {
+                app.collections_input.push(c);
+            }
+            _ => {}
+        },
+        CollectionsMode::SetInterval => match key {
+            KeyCode::Enter => {
+                if let Some(name) = app.collections_list.get(app.collections_cursor).cloned() {
+                    if let Ok(mut coll) = collection::load_collection(&name) {
+                        let trimmed = app.collections_input.trim().to_string();
+                        if trimmed.is_empty() {
+                            coll.interval = None;
+                            app.status_message = Some(format!("Cleared interval for '{}'", name));
+                        } else {
+                            coll.interval = Some(trimmed.clone());
+                            app.status_message =
+                                Some(format!("Set interval '{}' for '{}'", trimmed, name));
+                        }
+                        if let Err(e) = collection::save_collection(&coll) {
+                            app.status_message = Some(format!("Error: {}", e));
+                        }
+                    }
+                }
+                app.collections_mode = CollectionsMode::Normal;
+                app.collections_input.clear();
+            }
+            KeyCode::Esc => {
+                app.collections_mode = CollectionsMode::Normal;
+                app.collections_input.clear();
+            }
+            KeyCode::Backspace => {
+                app.collections_input.pop();
+            }
+            KeyCode::Char(c) => {
+                app.collections_input.push(c);
+            }
+            _ => {}
+        },
+        CollectionsMode::ConfirmDelete => match key {
+            KeyCode::Char('y') => {
+                if let Some(name) = app.collections_list.get(app.collections_cursor).cloned() {
+                    match collection::delete_collection(&name) {
+                        Ok(()) => {
+                            // Clear active if it was the deleted one
+                            let mut config = collection::load_config();
+                            if config.active_collection.as_deref() == Some(&name) {
+                                config.active_collection = None;
+                                let _ = collection::save_config(&config);
+                            }
+                            app.status_message = Some(format!("Deleted collection '{}'", name));
+                            app.refresh_collections();
+                        }
+                        Err(e) => {
+                            app.status_message = Some(format!("Error: {}", e));
+                        }
+                    }
+                }
+                app.collections_mode = CollectionsMode::Normal;
+            }
+            KeyCode::Char('n') | KeyCode::Esc => {
+                app.collections_mode = CollectionsMode::Normal;
+            }
+            _ => {}
+        },
+    }
+}
+
+fn handle_collections_list_input(app: &mut App, key: KeyCode) {
+    match key {
+        KeyCode::Char('j') | KeyCode::Down => {
+            if !app.collections_list.is_empty() {
+                app.collections_cursor =
+                    (app.collections_cursor + 1).min(app.collections_list.len() - 1);
+            }
+        }
+        KeyCode::Char('k') | KeyCode::Up => {
+            app.collections_cursor = app.collections_cursor.saturating_sub(1);
+        }
+        KeyCode::Enter | KeyCode::Char('l') | KeyCode::Right => {
+            app.load_selected_collection();
+        }
+        KeyCode::Char('n') => {
+            app.collections_mode = CollectionsMode::NewCollection;
+            app.collections_input.clear();
+        }
+        KeyCode::Char('d') => {
+            if !app.collections_list.is_empty() {
+                app.collections_mode = CollectionsMode::ConfirmDelete;
+            }
+        }
+        KeyCode::Char('u') => {
+            if let Some(name) = app.collections_list.get(app.collections_cursor).cloned() {
+                let mut config = collection::load_config();
+                config.active_collection = Some(name.clone());
+                match collection::save_config(&config) {
+                    Ok(()) => {
+                        app.status_message = Some(format!("Activated collection '{}'", name));
+                    }
+                    Err(e) => {
+                        app.status_message = Some(format!("Error: {}", e));
+                    }
+                }
+            }
+        }
+        KeyCode::Char('s') => {
+            if let Some(name) = app.collections_list.get(app.collections_cursor).cloned() {
+                if let Ok(mut coll) = collection::load_collection(&name) {
+                    coll.order = match coll.order {
+                        collection::CycleOrder::Sequential => collection::CycleOrder::Shuffle,
+                        collection::CycleOrder::Shuffle => collection::CycleOrder::Sequential,
+                    };
+                    let order_label = match coll.order {
+                        collection::CycleOrder::Sequential => "sequential",
+                        collection::CycleOrder::Shuffle => "shuffle",
+                    };
+                    match collection::save_collection(&coll) {
+                        Ok(()) => {
+                            app.status_message =
+                                Some(format!("Set '{}' order to {}", name, order_label));
+                        }
+                        Err(e) => {
+                            app.status_message = Some(format!("Error: {}", e));
+                        }
+                    }
+                }
+            }
+        }
+        KeyCode::Char('i') => {
+            if !app.collections_list.is_empty() {
+                app.collections_mode = CollectionsMode::SetInterval;
+                app.collections_input.clear();
+            }
+        }
+        KeyCode::Char('h') | KeyCode::Left | KeyCode::Esc => {
+            app.screen = Screen::Browse;
+        }
+        _ => {}
+    }
+}
+
+fn handle_collections_theme_input(app: &mut App, key: KeyCode) {
+    match key {
+        KeyCode::Char('j') | KeyCode::Down => {
+            if let Some(ref coll) = app.collections_detail {
+                if !coll.themes.is_empty() {
+                    app.collections_theme_cursor =
+                        (app.collections_theme_cursor + 1).min(coll.themes.len() - 1);
+                }
+            }
+        }
+        KeyCode::Char('k') | KeyCode::Up => {
+            app.collections_theme_cursor = app.collections_theme_cursor.saturating_sub(1);
+        }
+        KeyCode::Char('x') => {
+            if let Some(name) = app.collections_list.get(app.collections_cursor).cloned() {
+                if let Ok(mut coll) = collection::load_collection(&name) {
+                    if app.collections_theme_cursor < coll.themes.len() {
+                        let removed = coll.themes.remove(app.collections_theme_cursor);
+                        // Adjust current_index if needed
+                        if coll.current_index >= coll.themes.len() && !coll.themes.is_empty() {
+                            coll.current_index = coll.themes.len() - 1;
+                        }
+                        match collection::save_collection(&coll) {
+                            Ok(()) => {
+                                app.status_message =
+                                    Some(format!("Removed '{}' from '{}'", removed.title, name));
+                                // Refresh the detail view
+                                app.collections_detail = Some(coll);
+                                if app.collections_theme_cursor > 0
+                                    && app.collections_theme_cursor
+                                        >= app
+                                            .collections_detail
+                                            .as_ref()
+                                            .map(|c| c.themes.len())
+                                            .unwrap_or(0)
+                                {
+                                    app.collections_theme_cursor =
+                                        app.collections_theme_cursor.saturating_sub(1);
+                                }
+                            }
+                            Err(e) => {
+                                app.status_message = Some(format!("Error: {}", e));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        KeyCode::Char('h') | KeyCode::Left | KeyCode::Esc => {
+            app.collections_viewing_themes = false;
+            app.collections_detail = None;
         }
         _ => {}
     }

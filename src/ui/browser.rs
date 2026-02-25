@@ -252,6 +252,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
             ("p", "preview"),
             ("a", "apply"),
             ("c", "collect"),
+            ("C", "collections"),
             ("n/N", "page"),
             ("q", "quit"),
         ];
