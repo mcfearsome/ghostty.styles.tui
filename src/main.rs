@@ -378,8 +378,48 @@ fn handle_browse_input(app: &mut App, key: KeyCode) {
                     app.screen = Screen::Confirm;
                 }
             }
+            KeyCode::Char('c') => {
+                if !app.themes.is_empty() {
+                    app.open_collection_popup();
+                }
+            }
             KeyCode::Char('r') => {
                 app.trigger_fetch();
+            }
+            _ => {}
+        },
+        InputMode::CollectionSelect => match key {
+            KeyCode::Char('j') | KeyCode::Down => {
+                app.collection_popup_cursor = (app.collection_popup_cursor + 1).min(app.collection_names.len() - 1);
+            }
+            KeyCode::Char('k') | KeyCode::Up => {
+                app.collection_popup_cursor = app.collection_popup_cursor.saturating_sub(1);
+            }
+            KeyCode::Enter => {
+                let name = app.collection_names[app.collection_popup_cursor].clone();
+                app.add_to_collection(&name);
+            }
+            KeyCode::Char('n') => {
+                app.input_mode = InputMode::CollectionCreate;
+                app.collection_name_input.clear();
+            }
+            KeyCode::Esc => {
+                app.input_mode = InputMode::Normal;
+            }
+            _ => {}
+        },
+        InputMode::CollectionCreate => match key {
+            KeyCode::Enter => {
+                app.create_collection_and_add();
+            }
+            KeyCode::Esc => {
+                app.input_mode = InputMode::Normal;
+            }
+            KeyCode::Backspace => {
+                app.collection_name_input.pop();
+            }
+            KeyCode::Char(c) => {
+                app.collection_name_input.push(c);
             }
             _ => {}
         },
@@ -394,6 +434,9 @@ fn handle_detail_input(app: &mut App, key: KeyCode) {
         KeyCode::Char('p') => app.toggle_osc_preview(),
         KeyCode::Char('a') => {
             app.screen = Screen::Confirm;
+        }
+        KeyCode::Char('c') => {
+            app.open_collection_popup();
         }
         _ => {}
     }

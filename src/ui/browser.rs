@@ -32,6 +32,11 @@ pub fn render_browser(f: &mut Frame, app: &App) {
     if app.input_mode == InputMode::TagSelect {
         render_tag_popup(f, app, size);
     }
+
+    // Collection popup overlay
+    if app.input_mode == InputMode::CollectionSelect || app.input_mode == InputMode::CollectionCreate {
+        render_collection_popup(f, app, size);
+    }
 }
 
 fn render_top_bar(f: &mut Frame, app: &App, area: Rect) {
@@ -246,6 +251,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
             ("d", "dark/light"),
             ("p", "preview"),
             ("a", "apply"),
+            ("c", "collect"),
             ("n/N", "page"),
             ("q", "quit"),
         ];
@@ -299,6 +305,85 @@ fn render_tag_popup(f: &mut Frame, app: &App, area: Rect) {
             .border_style(Style::default().fg(ACCENT)),
     );
     f.render_widget(list, popup_area);
+}
+
+fn render_collection_popup(f: &mut Frame, app: &App, area: Rect) {
+    let popup_width = 40u16;
+
+    if app.input_mode == InputMode::CollectionCreate {
+        let popup_height = 5u16;
+        let x = area.width.saturating_sub(popup_width) / 2;
+        let y = area.height.saturating_sub(popup_height) / 2;
+        let popup_area = Rect::new(x, y, popup_width, popup_height);
+
+        f.render_widget(Clear, popup_area);
+
+        let lines = vec![
+            Line::from(Span::styled(
+                format!(" > {}_ ", app.collection_name_input),
+                Style::default().fg(Color::White),
+            )),
+            Line::from(""),
+            Line::from(Span::styled(
+                " Enter confirm  Esc cancel",
+                Style::default().fg(DIM),
+            )),
+        ];
+        let paragraph = Paragraph::new(lines).block(
+            Block::default()
+                .title(Span::styled(" New Collection ", Style::default().fg(ACCENT)))
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(ACCENT)),
+        );
+        f.render_widget(paragraph, popup_area);
+    } else {
+        // CollectionSelect
+        let popup_height = (app.collection_names.len() as u16 + 4).min(area.height);
+        let x = area.width.saturating_sub(popup_width) / 2;
+        let y = area.height.saturating_sub(popup_height) / 2;
+        let popup_area = Rect::new(x, y, popup_width, popup_height);
+
+        f.render_widget(Clear, popup_area);
+
+        let items: Vec<ListItem> = app
+            .collection_names
+            .iter()
+            .enumerate()
+            .map(|(i, name)| {
+                let is_cursor = i == app.collection_popup_cursor;
+                let indicator = if is_cursor { ">" } else { " " };
+                let style = if is_cursor {
+                    Style::default().fg(ACCENT).add_modifier(Modifier::BOLD)
+                } else {
+                    Style::default().fg(Color::Gray)
+                };
+                ListItem::new(Span::styled(format!(" {} {} ", indicator, name), style))
+            })
+            .collect();
+
+        let list = List::new(items).block(
+            Block::default()
+                .title(Span::styled(" Add to Collection ", Style::default().fg(ACCENT)))
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(ACCENT)),
+        );
+        f.render_widget(list, popup_area);
+
+        // Render hint at bottom of popup
+        let hint_y = popup_area.y + popup_area.height.saturating_sub(1);
+        if hint_y < area.height {
+            let hint_area = Rect::new(popup_area.x + 1, hint_y, popup_area.width.saturating_sub(2), 1);
+            let hint = Paragraph::new(Line::from(vec![
+                Span::styled("n", Style::default().fg(ACCENT)),
+                Span::styled(" new  ", Style::default().fg(DIM)),
+                Span::styled("Enter", Style::default().fg(ACCENT)),
+                Span::styled(" select  ", Style::default().fg(DIM)),
+                Span::styled("Esc", Style::default().fg(ACCENT)),
+                Span::styled(" cancel", Style::default().fg(DIM)),
+            ]));
+            f.render_widget(hint, hint_area);
+        }
+    }
 }
 
 fn truncate(s: &str, max: usize) -> String {

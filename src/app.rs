@@ -31,6 +31,8 @@ pub enum InputMode {
     Normal,
     Search,
     TagSelect,
+    CollectionSelect,
+    CollectionCreate,
 }
 
 pub enum BgMessage {
@@ -60,6 +62,9 @@ pub struct App {
     pub should_quit: bool,
     pub bg_rx: mpsc::Receiver<BgMessage>,
     pub bg_tx: mpsc::Sender<BgMessage>,
+    pub collection_names: Vec<String>,
+    pub collection_popup_cursor: usize,
+    pub collection_name_input: String,
 }
 
 impl App {
@@ -88,6 +93,9 @@ impl App {
             should_quit: false,
             bg_rx: rx,
             bg_tx: tx,
+            collection_names: Vec::new(),
+            collection_popup_cursor: 0,
+            collection_name_input: String::new(),
         }
     }
 
@@ -226,6 +234,57 @@ impl App {
                     self.status_message = Some(format!("Error: {}", e));
                     self.screen = Screen::Browse;
                 }
+            }
+        }
+    }
+
+    pub fn open_collection_popup(&mut self) {
+        self.collection_names = crate::collection::list_collections();
+        if self.collection_names.is_empty() {
+            self.input_mode = InputMode::CollectionCreate;
+            self.collection_name_input.clear();
+        } else if self.collection_names.len() == 1 {
+            self.add_to_collection(&self.collection_names[0].clone());
+        } else {
+            self.input_mode = InputMode::CollectionSelect;
+            self.collection_popup_cursor = 0;
+        }
+    }
+
+    pub fn add_to_collection(&mut self, name: &str) {
+        if let Some(theme) = self.selected_theme() {
+            let entry = crate::collection::CollectionTheme {
+                slug: theme.slug.clone(),
+                title: theme.title.clone(),
+                is_dark: theme.is_dark,
+                raw_config: theme.raw_config.clone(),
+            };
+            let title = entry.title.clone();
+            match crate::collection::load_collection(name) {
+                Ok(mut coll) => {
+                    coll.themes.push(entry);
+                    match crate::collection::save_collection(&coll) {
+                        Ok(_) => self.status_message = Some(format!("Added '{}' to '{}'", title, name)),
+                        Err(e) => self.status_message = Some(format!("Error: {}", e)),
+                    }
+                }
+                Err(e) => self.status_message = Some(format!("Error: {}", e)),
+            }
+        }
+        self.input_mode = InputMode::Normal;
+    }
+
+    pub fn create_collection_and_add(&mut self) {
+        let name = self.collection_name_input.trim().to_string();
+        if name.is_empty() {
+            self.input_mode = InputMode::Normal;
+            return;
+        }
+        match crate::collection::create_collection(&name) {
+            Ok(_) => self.add_to_collection(&name),
+            Err(e) => {
+                self.status_message = Some(format!("Error: {}", e));
+                self.input_mode = InputMode::Normal;
             }
         }
     }
