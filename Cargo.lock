@@ -359,7 +359,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ghostty-styles-tui"
+name = "ghostty-styles"
 version = "0.1.0"
 dependencies = [
  "crossterm",

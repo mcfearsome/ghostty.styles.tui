@@ -1,1 +1,82 @@
-#Ghostty Styles TUI
+# ghostty-styles
+
+A terminal UI for browsing, previewing, and applying [Ghostty](https://ghostty.org) themes.
+
+Fetches themes from [ghostty-style.vercel.app](https://ghostty-style.vercel.app), displays live color previews using OSC escape sequences, and applies themes directly to your Ghostty config file.
+
+Requires the Ghostty terminal to run.
+
+## Features
+
+- **Browse** hundreds of community themes with search, tag filtering, and sorting (Popular / Newest / Trending)
+- **Live preview** — press `p` to apply theme colors to your terminal in real-time via OSC sequences (restored on exit)
+- **Apply themes** directly to your Ghostty config with automatic backup
+- **Filter** by dark/light mode, tags (retro, pastel, neon, minimal, etc.), and text search
+- **Vim-style navigation** — `j`/`k`/`h`/`l`, arrow keys, or Enter to drill into details
+
+## Install
+
+### From source
+
+```sh
+cargo install --path .
+```
+
+### Build manually
+
+```sh
+git clone https://github.com/mcfearsome/ghostty.styles.tui.git
+cd ghostty.styles.tui
+cargo build --release
+# Binary is at target/release/ghostty-styles
+```
+
+## Usage
+
+```sh
+ghostty-styles
+```
+
+Must be run inside a Ghostty terminal session.
+
+### Keybindings
+
+#### Browse screen
+
+| Key | Action |
+|-----|--------|
+| `j` / `k` | Navigate up/down |
+| `Enter` / `l` | Open theme details |
+| `/` | Search themes |
+| `t` | Filter by tag |
+| `s` | Cycle sort order |
+| `d` | Toggle dark/light filter |
+| `p` | Toggle live OSC preview |
+| `a` | Apply theme to config |
+| `n` / `N` | Next/previous page |
+| `r` | Refresh |
+| `q` / `Esc` | Quit |
+
+#### Detail screen
+
+| Key | Action |
+|-----|--------|
+| `h` / `Esc` | Back to browse |
+| `p` | Toggle live preview |
+| `a` | Apply theme |
+
+### Applying themes
+
+When you apply a theme, `ghostty-styles` will:
+
+1. Create a backup of your config at `config.bak`
+2. Remove existing color keys (background, foreground, palette, cursor-color, etc.)
+3. Append the theme's configuration
+
+Config file locations:
+- **macOS:** `~/Library/Application Support/com.mitchellh.ghostty/config`
+- **Linux:** `~/.config/ghostty/config`
+
+## License
+
+MIT

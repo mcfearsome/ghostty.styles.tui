@@ -1,0 +1,7 @@
+[2026-02-25 00:00] INIT: Logbook initialized for project
+[2026-02-25 00:00] NOTE: Created feature G001: Theme Collection Cycling
+[2026-02-25 00:00] NOTE: Created feature G002: Light/Dark Mode Awareness (depends on G001)
+[2026-02-25 00:00] NOTE: Created feature G003: README and License
+[2026-02-25 00:00] NOTE: Created feature G004: Homebrew Installation (depends on G003)
+[2026-02-25 00:00] NOTE: Created feature G005: Tests and CI (depends on G003)
+[2026-02-25 00:00] COMPLETE: G003 README and License — added README.md, LICENSE (MIT), Cargo.toml license field

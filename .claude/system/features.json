@@ -1,0 +1,64 @@
+[
+  {
+    "id": "G001",
+    "title": "Theme Collection Cycling",
+    "status": "new",
+    "priority": 1,
+    "dependencies": [],
+    "notes": [
+      "Created 2026-02-25",
+      "Define a collection of themes that cycle automatically on a timed interval or on new tab open",
+      "Needs UI for managing the collection and configuring cycle trigger (interval vs new tab)"
+    ]
+  },
+  {
+    "id": "G002",
+    "title": "Light/Dark Mode Awareness",
+    "status": "new",
+    "priority": 2,
+    "dependencies": ["G001"],
+    "notes": [
+      "Created 2026-02-25",
+      "Filter theme cycle collection based on light/dark mode",
+      "Respect system-level and app-level light/dark settings",
+      "Support modes: light-only, dark-only, time-of-day-based auto switching",
+      "Settings controllable at both app and system level"
+    ]
+  },
+  {
+    "id": "G003",
+    "title": "README and License",
+    "status": "complete",
+    "priority": 3,
+    "dependencies": [],
+    "notes": [
+      "Created 2026-02-25",
+      "Write a proper README with project description, screenshots, install instructions, usage",
+      "Add a license file",
+      "2026-02-25: Status changed to complete — README.md, LICENSE (MIT), and Cargo.toml license field added"
+    ]
+  },
+  {
+    "id": "G004",
+    "title": "Homebrew Installation",
+    "status": "new",
+    "priority": 4,
+    "dependencies": ["G003"],
+    "notes": [
+      "Created 2026-02-25",
+      "Create Homebrew formula for easy installation",
+      "Needs README and license in place first"
+    ]
+  },
+  {
+    "id": "G005",
+    "title": "Tests and CI",
+    "status": "new",
+    "priority": 5,
+    "dependencies": ["G003"],
+    "notes": [
+      "Created 2026-02-25",
+      "Add test suite and continuous integration pipeline"
+    ]
+  }
+]

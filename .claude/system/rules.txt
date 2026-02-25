@@ -1,0 +1,4 @@
+# Project Rules and Constraints
+# Append-only — never delete entries, only add new ones
+
+1. (Add rules as you discover them)
