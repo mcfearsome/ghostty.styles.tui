@@ -13,6 +13,8 @@ Requires the Ghostty terminal to run.
 - **Apply themes** directly to your Ghostty config with automatic backup
 - **Filter** by dark/light mode, tags (retro, pastel, neon, minimal, etc.), and text search
 - **Vim-style navigation** — `j`/`k`/`h`/`l`, arrow keys, or Enter to drill into details
+- **Theme creation** — build themes from scratch or fork existing ones with an HSL color picker, mouse-draggable sliders, and palette auto-generation
+- **Export & upload** — save themes locally, apply to your config, or export for upload to the community site
 
 ## Install
 
@@ -60,7 +62,8 @@ Must be run inside a Ghostty terminal session.
 | `d` | Toggle dark/light filter |
 | `p` | Toggle live OSC preview |
 | `a` | Apply theme to config |
-| `n` / `N` | Next/previous page |
+| `n` | Create new theme |
+| `]` / `[` | Next/previous page |
 | `r` | Refresh |
 | `c` | Add to collection |
 | `C` | Manage collections |
@@ -73,6 +76,43 @@ Must be run inside a Ghostty terminal session.
 | `h` / `Esc` | Back to browse |
 | `p` | Toggle live preview |
 | `a` | Apply theme |
+| `c` | Add to collection |
+| `f` | Fork into theme creator |
+
+#### Creator screen
+
+| Key | Action |
+|-----|--------|
+| `j` / `k` | Navigate color fields |
+| `Enter` / `l` | Edit selected color |
+| Arrow keys | Adjust HSL sliders (Shift for x10) |
+| `Tab` | Toggle hex input / slider mode |
+| `g` | Toggle palette generation algorithm |
+| `p` | Toggle live OSC preview |
+| `s` | Save / metadata screen |
+| Mouse click/drag | Select fields, drag sliders |
+| `Esc` | Exit creator |
+
+### Theme Creation
+
+Create themes from scratch or fork existing ones:
+
+```sh
+# Open the theme creator
+ghostty-styles create
+
+# Fork an existing theme
+ghostty-styles create --from catppuccin-mocha
+```
+
+Or press `n` on the Browse screen to create, or `f` on the Detail screen to fork.
+
+The creator has three panels:
+- **Color fields** — all 22 Ghostty color keys (bg, fg, cursor, selection, palette 0-15)
+- **HSL picker** — hue, saturation, lightness sliders with gradient bars, or hex input
+- **Preview** — live theme preview with palette swatches and sample output
+
+Press `g` to toggle between hue-rotation and base16-style palette generation. Press `s` to enter metadata (title, description, tags, author) then apply, export, or upload.
 
 ### Applying themes
 

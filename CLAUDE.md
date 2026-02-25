@@ -24,7 +24,7 @@ No tests or lints are currently configured.
 
 ### Core Modules
 
-- **`main.rs`** — Terminal setup/teardown, event loop, and input handling dispatched by `Screen` and `InputMode`. All keybinding logic lives here in `handle_browse_input`, `handle_detail_input`, `handle_confirm_input`.
+- **`main.rs`** — Terminal setup/teardown, event loop, and input handling dispatched by `Screen` and `InputMode`. All keybinding logic lives here in `handle_browse_input`, `handle_detail_input`, `handle_confirm_input`, `handle_create_input`, `handle_create_meta_input`, `handle_create_mouse`.
 - **`app.rs`** — Central `App` state struct. Owns all UI state (selection, pagination, filters, search). Uses `mpsc` channels for background API fetches on a spawned thread. `BgMessage` enum for thread communication.
 - **`api.rs`** — HTTP client using `reqwest::blocking`. Fetches from `https://ghostty-style.vercel.app/api/configs` with query/tag/sort/page/dark params. `SortOrder` enum cycles through Popular → Newest → Trending.
 - **`theme.rs`** — `GhosttyConfig` and `ConfigResponse` serde models (camelCase deserialized). Helper methods for parsing hex colors to ratatui `Color`.
@@ -35,6 +35,8 @@ No tests or lints are currently configured.
 - **`cycling.rs`** — Theme cycling logic. `apply_next()` advances to next theme (sequential or shuffle) and writes to Ghostty config.
 - **`daemon.rs`** — Cycling daemon. start/stop/status for timed theme rotation. Uses PID file for process management.
 - **`shell_hook.rs`** — Shell hook installer. Detects shell (zsh/bash), installs snippet to rc file for new-tab cycling.
+- **`creator.rs`** — `CreatorState` data model, `HslColor` with HSL↔RGB↔Hex conversion, `ColorField` enum (22 fields: bg, fg, cursor, selection, palette 0-15), palette auto-generation (hue rotation and base16 algorithms), raw config building.
+- **`export.rs`** — Theme export to `~/.config/ghostty-styles/themes/<slug>.conf`, apply to Ghostty config via `config::apply_theme`, open browser for upload to ghostty-style.vercel.app.
 
 ### UI Modules (`src/ui/`)
 
@@ -42,6 +44,8 @@ No tests or lints are currently configured.
 - **`details.rs`** — Detail screen: theme info, raw config display, and confirmation prompt for applying.
 - **`preview.rs`** — `ThemePreview` widget (implements ratatui `Widget`). Renders palette swatches and sample terminal output using theme colors.
 - **`collections.rs`** — Collections management screen. Two-panel layout with collection list and theme detail.
+- **`creator.rs`** — Creator screen: three-column layout with color field list (25%), HSL picker with gradient sliders (35%), and theme preview (40%). Supports mouse click/drag on sliders.
+- **`create_meta.rs`** — Metadata entry screen: title, description, tags (multi-select up to 5), author name, and action buttons (apply/export/upload).
 
 ### Screen Flow
 
@@ -49,6 +53,10 @@ No tests or lints are currently configured.
 
 ```
 Browse → Detail → Confirm (apply)
+  ↓        ↓
+  n      f (fork)
+  ↓        ↓
+Create → CreateMeta → Apply/Export/Upload
   ↓
 Collections → Collection themes
 ```
@@ -60,3 +68,6 @@ Collections → Collection themes
 - The `COLOR_KEYS` array in `config.rs` determines which config lines get replaced when applying a theme.
 - `c` on Browse/Detail: add theme to collection.
 - `C` on Browse: open Collections screen.
+- `n` on Browse: open theme creator. `f` on Detail: fork theme into creator.
+- Creator uses mouse capture for field selection and slider dragging.
+- `]/[` for pagination (remapped from n/N).
