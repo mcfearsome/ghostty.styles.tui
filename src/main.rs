@@ -16,7 +16,9 @@ use std::io;
 use std::time::Duration;
 
 use clap::Parser;
-use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
+use crossterm::event::{
+    self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers,
+};
 use crossterm::execute;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
@@ -258,7 +260,8 @@ fn run_tui() {
     // Setup terminal
     enable_raw_mode().expect("Failed to enable raw mode");
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen).expect("Failed to enter alternate screen");
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)
+        .expect("Failed to enter alternate screen");
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).expect("Failed to create terminal");
 
@@ -270,7 +273,7 @@ fn run_tui() {
     // Cleanup
     app.cleanup();
     disable_raw_mode().expect("Failed to disable raw mode");
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)
+    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)
         .expect("Failed to leave alternate screen");
 
     if let Err(e) = result {
@@ -295,27 +298,38 @@ fn run_app(
 
         // Poll for events with a timeout so we can check background messages
         if event::poll(Duration::from_millis(50))? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind != KeyEventKind::Press {
-                    continue;
-                }
+            let ev = event::read()?;
+            match ev {
+                Event::Key(key) => {
+                    if key.kind != KeyEventKind::Press {
+                        continue;
+                    }
 
-                // Clear status message on any keypress
-                app.status_message = None;
+                    // Clear status message on any keypress
+                    app.status_message = None;
 
-                // Ctrl+C always quits
-                if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c')
-                {
-                    app.should_quit = true;
-                }
+                    // Ctrl+C always quits
+                    if key.modifiers.contains(KeyModifiers::CONTROL)
+                        && key.code == KeyCode::Char('c')
+                    {
+                        app.should_quit = true;
+                    }
 
-                match app.screen {
-                    Screen::Browse => handle_browse_input(app, key.code),
-                    Screen::Detail => handle_detail_input(app, key.code),
-                    Screen::Confirm => handle_confirm_input(app, key.code),
-                    Screen::Collections => handle_collections_input(app, key.code),
-                    Screen::Create | Screen::CreateMeta => {} // TODO: input in Tasks 7/9
+                    match app.screen {
+                        Screen::Browse => handle_browse_input(app, key.code),
+                        Screen::Detail => handle_detail_input(app, key.code),
+                        Screen::Confirm => handle_confirm_input(app, key.code),
+                        Screen::Collections => handle_collections_input(app, key.code),
+                        Screen::Create => handle_create_input(app, key.code, key.modifiers),
+                        Screen::CreateMeta => handle_create_meta_input(app, key.code),
+                    }
                 }
+                Event::Mouse(mouse) => {
+                    if app.screen == Screen::Create {
+                        handle_create_mouse(app, mouse);
+                    }
+                }
+                _ => {}
             }
         }
 
@@ -376,8 +390,9 @@ fn handle_browse_input(app: &mut App, key: KeyCode) {
             }
             KeyCode::Char('s') => app.cycle_sort(),
             KeyCode::Char('d') => app.toggle_dark_filter(),
-            KeyCode::Char('n') => app.next_page(),
-            KeyCode::Char('N') => app.prev_page(),
+            KeyCode::Char('n') => app.enter_creator("Untitled".to_string()),
+            KeyCode::Char(']') => app.next_page(),
+            KeyCode::Char('[') => app.prev_page(),
             KeyCode::Char('p') => app.toggle_osc_preview(),
             KeyCode::Char('a') => {
                 if !app.themes.is_empty() {
@@ -449,6 +464,9 @@ fn handle_detail_input(app: &mut App, key: KeyCode) {
         }
         KeyCode::Char('c') => {
             app.open_collection_popup();
+        }
+        KeyCode::Char('f') => {
+            app.enter_creator_from_theme();
         }
         _ => {}
     }
@@ -691,4 +709,16 @@ fn handle_collections_theme_input(app: &mut App, key: KeyCode) {
         }
         _ => {}
     }
+}
+
+fn handle_create_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) {
+    let _ = (app, key, modifiers); // TODO: Task 7
+}
+
+fn handle_create_meta_input(app: &mut App, key: KeyCode) {
+    let _ = (app, key); // TODO: Task 9
+}
+
+fn handle_create_mouse(app: &mut App, mouse: crossterm::event::MouseEvent) {
+    let _ = (app, mouse); // TODO: Task 8
 }
