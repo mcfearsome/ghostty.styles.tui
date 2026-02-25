@@ -5,6 +5,7 @@ mod collection;
 mod config;
 mod creator;
 mod cycling;
+mod darkmode;
 mod daemon;
 mod export;
 mod preview;

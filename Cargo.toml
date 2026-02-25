@@ -1,6 +1,6 @@
 [package]
 name = "ghostty-styles"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "A TUI for browsing and previewing Ghostty terminal themes"
 license = "MIT"
@@ -25,6 +25,7 @@ reqwest = { version = "0.12", features = ["blocking", "json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 dirs = "6"
+libc = "0.2"
 unicode-width = "0.2"
 
 [package.metadata.deb]
