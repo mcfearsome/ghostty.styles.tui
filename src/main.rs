@@ -767,7 +767,174 @@ fn handle_collections_theme_input(app: &mut App, key: KeyCode) {
 }
 
 fn handle_create_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) {
-    let _ = (app, key, modifiers); // TODO: Task 7
+    use crate::creator::{ColorField, PickerMode, SliderFocus};
+
+    let state = match app.creator_state.as_mut() {
+        Some(s) => s,
+        None => return,
+    };
+
+    if state.editing {
+        match state.picker_mode {
+            PickerMode::Slider => match key {
+                KeyCode::Left => {
+                    let delta = if modifiers.contains(KeyModifiers::SHIFT) {
+                        -10.0
+                    } else {
+                        -1.0
+                    };
+                    state.adjust_slider(delta);
+                    if state.osc_preview {
+                        let config = state.build_preview_config();
+                        preview::apply_osc_preview(&config);
+                    }
+                }
+                KeyCode::Right => {
+                    let delta = if modifiers.contains(KeyModifiers::SHIFT) {
+                        10.0
+                    } else {
+                        1.0
+                    };
+                    state.adjust_slider(delta);
+                    if state.osc_preview {
+                        let config = state.build_preview_config();
+                        preview::apply_osc_preview(&config);
+                    }
+                }
+                KeyCode::Up => {
+                    state.slider_focus = match state.slider_focus {
+                        SliderFocus::Hue => SliderFocus::Lightness,
+                        SliderFocus::Saturation => SliderFocus::Hue,
+                        SliderFocus::Lightness => SliderFocus::Saturation,
+                    };
+                }
+                KeyCode::Down => {
+                    state.slider_focus = match state.slider_focus {
+                        SliderFocus::Hue => SliderFocus::Saturation,
+                        SliderFocus::Saturation => SliderFocus::Lightness,
+                        SliderFocus::Lightness => SliderFocus::Hue,
+                    };
+                }
+                KeyCode::Tab => {
+                    state.picker_mode = PickerMode::HexInput;
+                    state.sync_hex_from_color();
+                }
+                KeyCode::Esc | KeyCode::Enter => {
+                    state.editing = false;
+                }
+                _ => {}
+            },
+            PickerMode::HexInput => match key {
+                KeyCode::Char(c) if c.is_ascii_hexdigit() || c == '#' => {
+                    if state.hex_input.len() < 7 {
+                        state.hex_input.push(c);
+                    }
+                    // Auto-commit when we have a '#' plus 6 hex digits
+                    let digits: String = state
+                        .hex_input
+                        .chars()
+                        .filter(|ch| ch.is_ascii_hexdigit())
+                        .collect();
+                    if digits.len() == 6 {
+                        state.commit_hex_input();
+                        if state.osc_preview {
+                            let config = state.build_preview_config();
+                            preview::apply_osc_preview(&config);
+                        }
+                    }
+                }
+                KeyCode::Backspace => {
+                    state.hex_input.pop();
+                }
+                KeyCode::Enter => {
+                    state.commit_hex_input();
+                    state.editing = false;
+                    if state.osc_preview {
+                        let config = state.build_preview_config();
+                        preview::apply_osc_preview(&config);
+                    }
+                }
+                KeyCode::Tab => {
+                    state.picker_mode = PickerMode::Slider;
+                }
+                KeyCode::Esc => {
+                    state.editing = false;
+                }
+                _ => {}
+            },
+        }
+    } else {
+        // Navigation mode
+        let field_count = ColorField::all().len();
+        let visible_rows: usize = 18;
+
+        match key {
+            KeyCode::Char('j') | KeyCode::Down => {
+                if state.field_index < field_count - 1 {
+                    state.field_index += 1;
+                    if state.field_index >= state.field_scroll + visible_rows {
+                        state.field_scroll = state.field_index + 1 - visible_rows;
+                    }
+                }
+            }
+            KeyCode::Char('k') | KeyCode::Up => {
+                if state.field_index > 0 {
+                    state.field_index -= 1;
+                    if state.field_index < state.field_scroll {
+                        state.field_scroll = state.field_index;
+                    }
+                }
+            }
+            KeyCode::Enter | KeyCode::Char('l') => {
+                state.editing = true;
+                state.slider_focus = SliderFocus::Hue;
+                state.sync_hex_from_color();
+            }
+            KeyCode::Char('g') => {
+                state.gen_algorithm = state.gen_algorithm.toggle();
+                state.generate_palette();
+                app.status_message =
+                    Some(format!("Algorithm: {}", state.gen_algorithm.label()));
+                if state.osc_preview {
+                    let config = state.build_preview_config();
+                    preview::apply_osc_preview(&config);
+                }
+            }
+            KeyCode::Char('p') => {
+                if state.osc_preview {
+                    // Turn off: restore colors
+                    if let Some(ref saved) = app.saved_colors {
+                        preview::restore_colors(saved);
+                    }
+                    app.saved_colors = None;
+                    state.osc_preview = false;
+                    app.status_message = Some("Preview off - colors restored".into());
+                } else {
+                    // Turn on: save current and apply
+                    app.saved_colors = Some(preview::save_current_colors());
+                    state.osc_preview = true;
+                    let config = state.build_preview_config();
+                    preview::apply_osc_preview(&config);
+                    app.status_message = Some("Live preview on".into());
+                }
+            }
+            KeyCode::Char('s') => {
+                app.enter_create_meta();
+            }
+            KeyCode::Esc | KeyCode::Char('q') => {
+                // Restore OSC if active
+                if state.osc_preview {
+                    if let Some(ref saved) = app.saved_colors {
+                        preview::restore_colors(saved);
+                    }
+                    app.saved_colors = None;
+                }
+                app.creator_state = None;
+                app.screen = Screen::Browse;
+            }
+            _ => {}
+        }
+    }
 }
 
 fn handle_create_meta_input(app: &mut App, key: KeyCode) {
