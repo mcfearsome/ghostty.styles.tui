@@ -33,29 +33,7 @@ fn main() {
 
 fn dispatch_command(cmd: Commands) {
     match cmd {
-        Commands::Collection { action } => match action {
-            CollectionAction::Create { name } => {
-                eprintln!("collection create '{}': not yet implemented", name);
-            }
-            CollectionAction::List => {
-                eprintln!("collection list: not yet implemented");
-            }
-            CollectionAction::Show { name } => {
-                eprintln!("collection show '{}': not yet implemented", name);
-            }
-            CollectionAction::Add { collection, slug } => {
-                eprintln!(
-                    "collection add '{}' to '{}': not yet implemented",
-                    slug, collection
-                );
-            }
-            CollectionAction::Use { name } => {
-                eprintln!("collection use '{}': not yet implemented", name);
-            }
-            CollectionAction::Delete { name } => {
-                eprintln!("collection delete '{}': not yet implemented", name);
-            }
-        },
+        Commands::Collection { action } => handle_collection(action),
         Commands::Next => {
             eprintln!("next: not yet implemented");
         }
@@ -71,6 +49,159 @@ fn dispatch_command(cmd: Commands) {
             }
         },
     }
+}
+
+fn handle_collection(action: CollectionAction) {
+    match action {
+        CollectionAction::Create { name } => {
+            match collection::create_collection(&name) {
+                Ok(_) => {
+                    println!("Created collection '{}'", name);
+                    prompt_daemon_and_hook(&name);
+                }
+                Err(e) => {
+                    eprintln!("Error creating collection: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        CollectionAction::List => {
+            let names = collection::list_collections();
+            if names.is_empty() {
+                println!("No collections yet. Create one with:");
+                println!("  ghostty-styles collection create <name>");
+                return;
+            }
+            let config = collection::load_config();
+            let active = config.active_collection.as_deref();
+            for name in &names {
+                let marker = if active == Some(name.as_str()) { " (active)" } else { "" };
+                match collection::load_collection(name) {
+                    Ok(col) => {
+                        let count = col.themes.len();
+                        let theme_word = if count == 1 { "theme" } else { "themes" };
+                        println!("  {}{} - {} {}", name, marker, count, theme_word);
+                    }
+                    Err(_) => {
+                        println!("  {}{} - (error loading)", name, marker);
+                    }
+                }
+            }
+        }
+        CollectionAction::Show { name } => {
+            match collection::load_collection(&name) {
+                Ok(col) => {
+                    let order_str = match col.order {
+                        collection::CycleOrder::Sequential => "sequential",
+                        collection::CycleOrder::Shuffle => "shuffle",
+                    };
+                    let interval_str = col
+                        .interval
+                        .as_deref()
+                        .unwrap_or("not set");
+                    println!("Collection: {}", col.name);
+                    println!("Themes:     {}", col.themes.len());
+                    println!("Order:      {}", order_str);
+                    println!("Interval:   {}", interval_str);
+                    if col.themes.is_empty() {
+                        println!();
+                        println!("No themes yet. Add one with:");
+                        println!("  ghostty-styles collection add {} <slug>", name);
+                    } else {
+                        println!();
+                        for (i, theme) in col.themes.iter().enumerate() {
+                            let marker = if i == col.current_index { " <-" } else { "" };
+                            println!("  {}. {}{}", i + 1, theme.title, marker);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        CollectionAction::Add { collection: coll_name, slug } => {
+            // Fetch theme from API
+            match api::fetch_config_by_id(&slug) {
+                Ok(config) => {
+                    let theme = collection::CollectionTheme {
+                        slug: config.slug,
+                        title: config.title.clone(),
+                        is_dark: config.is_dark,
+                        raw_config: config.raw_config,
+                    };
+                    match collection::load_collection(&coll_name) {
+                        Ok(mut col) => {
+                            col.themes.push(theme);
+                            match collection::save_collection(&col) {
+                                Ok(()) => {
+                                    println!(
+                                        "Added '{}' to collection '{}'",
+                                        config.title, coll_name
+                                    );
+                                }
+                                Err(e) => {
+                                    eprintln!("Error saving collection: {}", e);
+                                    std::process::exit(1);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Error: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error fetching theme '{}': {}", slug, e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        CollectionAction::Use { name } => {
+            // Verify collection exists
+            if let Err(e) = collection::load_collection(&name) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
+            let mut config = collection::load_config();
+            config.active_collection = Some(name.clone());
+            match collection::save_config(&config) {
+                Ok(()) => {
+                    println!("Active collection set to '{}'", name);
+                }
+                Err(e) => {
+                    eprintln!("Error saving config: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        CollectionAction::Delete { name } => {
+            match collection::delete_collection(&name) {
+                Ok(()) => {
+                    // Clear active_collection if it was the deleted one
+                    let mut config = collection::load_config();
+                    if config.active_collection.as_deref() == Some(&name) {
+                        config.active_collection = None;
+                        if let Err(e) = collection::save_config(&config) {
+                            eprintln!("Warning: collection deleted but failed to update config: {}", e);
+                        }
+                    }
+                    println!("Deleted collection '{}'", name);
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+    }
+}
+
+/// Stub for daemon/hook setup — will be implemented in Task 6.
+fn prompt_daemon_and_hook(_name: &str) {
+    // No-op for now
 }
 
 fn run_tui() {
