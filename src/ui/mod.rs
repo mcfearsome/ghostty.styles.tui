@@ -1,7 +1,7 @@
 mod browser;
 mod collections;
 mod create_meta;
-mod creator;
+pub(crate) mod creator;
 mod details;
 pub(crate) mod preview;
 

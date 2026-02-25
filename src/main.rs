@@ -941,6 +941,126 @@ fn handle_create_meta_input(app: &mut App, key: KeyCode) {
     let _ = (app, key); // TODO: Task 9
 }
 
+fn app_area(_app: &App) -> ratatui::layout::Rect {
+    let (w, h) = crossterm::terminal::size().unwrap_or((80, 24));
+    ratatui::layout::Rect::new(0, 0, w, h)
+}
+
 fn handle_create_mouse(app: &mut App, mouse: crossterm::event::MouseEvent) {
-    let _ = (app, mouse); // TODO: Task 8
+    use crossterm::event::MouseEventKind;
+
+    match mouse.kind {
+        MouseEventKind::Down(_) | MouseEventKind::Drag(_) => {}
+        _ => return,
+    }
+
+    let area = app_area(app);
+    let layout = ui::creator::get_layout_rects(area);
+    let col = mouse.column;
+    let row = mouse.row;
+
+    let fields_inner = layout.fields_inner;
+    let picker_inner = layout.picker_inner;
+
+    // Click on the field list area
+    if col >= fields_inner.x
+        && col < fields_inner.x + fields_inner.width
+        && row >= fields_inner.y
+        && row < fields_inner.y + fields_inner.height
+    {
+        let state = match app.creator_state.as_mut() {
+            Some(s) => s,
+            None => return,
+        };
+
+        // Reserve one line at the bottom for the algorithm indicator (same as render_field_list)
+        let list_height = (fields_inner.height as usize).saturating_sub(1);
+        let row_in_panel = (row - fields_inner.y) as usize;
+
+        if row_in_panel < list_height {
+            let field_idx = row_in_panel + state.field_scroll;
+            let total_fields = creator::ColorField::all().len();
+            if field_idx < total_fields {
+                state.field_index = field_idx;
+                state.editing = true;
+                state.sync_hex_from_color();
+            }
+        }
+        return;
+    }
+
+    // Click/drag on the picker area (only when editing in slider mode)
+    if col >= picker_inner.x
+        && col < picker_inner.x + picker_inner.width
+        && row >= picker_inner.y
+        && row < picker_inner.y + picker_inner.height
+    {
+        let state = match app.creator_state.as_mut() {
+            Some(s) => s,
+            None => return,
+        };
+
+        if !state.editing {
+            return;
+        }
+
+        // The slider rows are laid out with spacers between them:
+        //   row 0: Hue
+        //   row 1: spacer
+        //   row 2: Saturation
+        //   row 3: spacer
+        //   row 4: Lightness
+        let rel_row = (row - picker_inner.y) as usize;
+        let slider_row = match rel_row {
+            0 => Some(0), // Hue
+            2 => Some(1), // Saturation
+            4 => Some(2), // Lightness
+            _ => None,
+        };
+
+        if let Some(slider_idx) = slider_row {
+            // Match the slider bar geometry from render_slider_row:
+            //   prefix_len = 5, suffix_len = 6
+            //   bar starts at picker_inner.x + 5
+            //   bar_width = picker_inner.width - 5 - 6
+            let prefix_len: u16 = 5;
+            let suffix_len: u16 = 6;
+            let bar_start = picker_inner.x + prefix_len;
+            let bar_width = picker_inner.width.saturating_sub(prefix_len + suffix_len);
+
+            if bar_width == 0 {
+                return;
+            }
+
+            if col >= bar_start && col < bar_start + bar_width {
+                let frac = (col - bar_start) as f64 / (bar_width as f64 - 1.0).max(1.0);
+                let frac = frac.clamp(0.0, 1.0);
+
+                let mut color = state.colors[state.field_index];
+                match slider_idx {
+                    0 => color.h = (frac * 360.0).rem_euclid(360.0),
+                    1 => color.s = (frac * 100.0).clamp(0.0, 100.0),
+                    2 => color.l = (frac * 100.0).clamp(0.0, 100.0),
+                    _ => unreachable!(),
+                }
+
+                state.colors[state.field_index] = color;
+                state.unsaved = true;
+                state.palette_dirty = true;
+                state.sync_hex_from_color();
+
+                // Update slider focus to match what was clicked
+                state.slider_focus = match slider_idx {
+                    0 => creator::SliderFocus::Hue,
+                    1 => creator::SliderFocus::Saturation,
+                    _ => creator::SliderFocus::Lightness,
+                };
+
+                if state.osc_preview {
+                    let config = state.build_preview_config();
+                    preview::apply_osc_preview(&config);
+                }
+            }
+        }
+    }
 }
