@@ -3,6 +3,7 @@ mod app;
 mod cli;
 mod collection;
 mod config;
+mod creator;
 mod cycling;
 mod daemon;
 mod preview;
