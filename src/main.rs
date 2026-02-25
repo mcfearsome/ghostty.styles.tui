@@ -6,6 +6,7 @@ mod config;
 mod creator;
 mod cycling;
 mod daemon;
+mod export;
 mod preview;
 mod shell_hook;
 mod theme;
