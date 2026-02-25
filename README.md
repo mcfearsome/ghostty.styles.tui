@@ -12,6 +12,7 @@ Requires the Ghostty terminal to run.
 - **Live preview** — press `p` to apply theme colors to your terminal in real-time via OSC sequences (restored on exit)
 - **Apply themes** directly to your Ghostty config with automatic backup
 - **Filter** by dark/light mode, tags (retro, pastel, neon, minimal, etc.), and text search
+- **Dark/light mode awareness** — auto-detect OS dark mode, time-of-day switching, or manual dark/light preference for theme cycling and browsing
 - **Vim-style navigation** — `j`/`k`/`h`/`l`, arrow keys, or Enter to drill into details
 - **Theme creation** — build themes from scratch or fork existing ones with an HSL color picker, mouse-draggable sliders, and palette auto-generation
 - **Export & upload** — save themes locally, apply to your config, or export for upload to the community site
@@ -60,6 +61,7 @@ Must be run inside a Ghostty terminal session.
 | `t` | Filter by tag |
 | `s` | Cycle sort order |
 | `d` | Toggle dark/light filter |
+| `m` | Cycle mode (dark/light/auto-os/auto-time/off) |
 | `p` | Toggle live OSC preview |
 | `a` | Apply theme to config |
 | `n` | Create new theme |
@@ -168,6 +170,32 @@ ghostty-styles cycle status
 # Stop the daemon
 ghostty-styles cycle stop
 ```
+
+### Dark/Light Mode
+
+Control which themes are used during cycling and browsing:
+
+```sh
+# Force dark themes only
+ghostty-styles mode dark
+
+# Force light themes only
+ghostty-styles mode light
+
+# Auto-detect from OS dark mode (reacts instantly to system changes)
+ghostty-styles mode auto-os
+
+# Switch by time of day (dark after 19:00, light after 07:00)
+ghostty-styles mode auto-time --dark-after 19:00 --light-after 07:00
+
+# Disable mode filtering
+ghostty-styles mode off
+
+# Check current mode
+ghostty-styles mode status
+```
+
+Press `m` in the TUI to cycle through modes. The daemon automatically switches themes when OS dark mode changes or time boundaries are crossed.
 
 #### Shell Hook
 

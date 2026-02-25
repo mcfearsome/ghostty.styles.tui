@@ -30,10 +30,11 @@ No tests or lints are currently configured.
 - **`theme.rs`** — `GhosttyConfig` and `ConfigResponse` serde models (camelCase deserialized). Helper methods for parsing hex colors to ratatui `Color`.
 - **`config.rs`** — Reads/writes the Ghostty config file (`~/Library/Application Support/com.mitchellh.ghostty/config` on macOS, `~/.config/ghostty/config` on Linux). Strips existing color keys before appending theme's `raw_config`. Creates `.config.bak` backup.
 - **`preview.rs`** — OSC escape sequences (OSC 10/11/12/4) for live terminal color preview. Restores via OSC 110/111/112/104.
-- **`cli.rs`** — Clap CLI definitions. Subcommands: collection (create/list/show/add/use/delete), next, cycle (start/stop/status).
-- **`collection.rs`** — Collection data model and persistence. CRUD for named theme collections stored in `~/.config/ghostty-styles/collections/`. `AppConfig` for active collection tracking.
-- **`cycling.rs`** — Theme cycling logic. `apply_next()` advances to next theme (sequential or shuffle) and writes to Ghostty config.
-- **`daemon.rs`** — Cycling daemon. start/stop/status for timed theme rotation. Uses PID file for process management.
+- **`cli.rs`** — Clap CLI definitions. Subcommands: collection (create/list/show/add/use/delete), next, cycle (start/stop/status), mode (dark/light/auto-os/auto-time/off/status).
+- **`collection.rs`** — Collection data model and persistence. CRUD for named theme collections stored in `~/.config/ghostty-styles/collections/`. `AppConfig` for active collection tracking, mode preference (`ModePreference` enum: Dark/Light/AutoOs/AutoTime), and time-of-day boundaries (`dark_after`/`light_after`).
+- **`cycling.rs`** — Theme cycling logic. `apply_next()` advances to next theme (sequential or shuffle), filters by mode preference (dark/light), and writes to Ghostty config.
+- **`daemon.rs`** — Cycling daemon. start/stop/status for timed theme rotation. Uses PID file for process management. Multi-source wake: OS dark mode watcher, interval timer, time-of-day boundary.
+- **`darkmode.rs`** — OS dark mode detection (`defaults read` on macOS, gsettings/dconf on Linux), event-driven watcher (DistributedNotificationCenter on macOS, gsettings monitor on Linux, 30s polling fallback), time-of-day resolution via libc.
 - **`shell_hook.rs`** — Shell hook installer. Detects shell (zsh/bash), installs snippet to rc file for new-tab cycling.
 - **`creator.rs`** — `CreatorState` data model, `HslColor` with HSL↔RGB↔Hex conversion, `ColorField` enum (22 fields: bg, fg, cursor, selection, palette 0-15), palette auto-generation (hue rotation and base16 algorithms), raw config building.
 - **`export.rs`** — Theme export to `~/.config/ghostty-styles/themes/<slug>.conf`, apply to Ghostty config via `config::apply_theme`, open browser for upload to ghostty-style.vercel.app.
@@ -71,3 +72,5 @@ Collections → Collection themes
 - `n` on Browse: open theme creator. `f` on Detail: fork theme into creator.
 - Creator uses mouse capture for field selection and slider dragging.
 - `]/[` for pagination (remapped from n/N).
+- `m` on Browse: cycle mode preference (Dark → Light → AutoOs → AutoTime → Off). Persists to config and re-fetches with appropriate dark_filter.
+- `d` on Browse: manual dark/light API filter toggle (independent of mode preference).
