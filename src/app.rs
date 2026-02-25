@@ -94,11 +94,17 @@ pub struct App {
     pub collections_input: String,
     pub creator_state: Option<crate::creator::CreatorState>,
     pub create_meta_state: Option<CreateMetaState>,
+    pub mode_preference: Option<crate::collection::ModePreference>,
 }
 
 impl App {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::channel();
+        let app_config = crate::collection::load_config();
+        let mode_pref = app_config.mode_preference.clone();
+        let dark_filter = mode_pref.as_ref().and_then(|p| {
+            crate::darkmode::resolve_mode(p, &app_config.dark_after, &app_config.light_after)
+        });
         Self {
             screen: Screen::Browse,
             input_mode: InputMode::Normal,
@@ -110,7 +116,7 @@ impl App {
             active_tag: None,
             tag_cursor: 0,
             sort: SortOrder::Popular,
-            dark_filter: None,
+            dark_filter,
             page: 1,
             total_pages: 0,
             total_results: 0,
@@ -134,6 +140,7 @@ impl App {
             collections_input: String::new(),
             creator_state: None,
             create_meta_state: None,
+            mode_preference: mode_pref,
         }
     }
 
@@ -214,6 +221,27 @@ impl App {
             Some(true) => Some(false),
             Some(false) => None,
         };
+        self.page = 1;
+        self.trigger_fetch();
+    }
+
+    pub fn cycle_mode(&mut self) {
+        use crate::collection::ModePreference;
+        self.mode_preference = match &self.mode_preference {
+            None => Some(ModePreference::Dark),
+            Some(pref) => pref.next(),
+        };
+        // Resolve dark_filter from new mode preference
+        let app_config = crate::collection::load_config();
+        self.dark_filter = self.mode_preference.as_ref().and_then(|p| {
+            crate::darkmode::resolve_mode(p, &app_config.dark_after, &app_config.light_after)
+        });
+        // Persist the preference
+        let mut config = app_config;
+        config.mode_preference = self.mode_preference.clone();
+        let _ = crate::collection::save_config(&config);
+        let label = self.mode_preference.as_ref().map_or("off", |p| p.label());
+        self.status_message = Some(format!("Mode: {}", label));
         self.page = 1;
         self.trigger_fetch();
     }

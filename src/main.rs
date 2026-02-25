@@ -73,7 +73,91 @@ fn dispatch_command(cmd: Commands) {
 }
 
 fn handle_mode(action: ModeAction) {
-    let _ = action; // TODO: Task 5
+    use collection::ModePreference;
+
+    let mut config = collection::load_config();
+
+    match action {
+        ModeAction::Dark => {
+            config.mode_preference = Some(ModePreference::Dark);
+            save_mode_config(&config);
+            println!("Mode: dark (only dark themes will be used)");
+        }
+        ModeAction::Light => {
+            config.mode_preference = Some(ModePreference::Light);
+            save_mode_config(&config);
+            println!("Mode: light (only light themes will be used)");
+        }
+        ModeAction::AutoOs => {
+            config.mode_preference = Some(ModePreference::AutoOs);
+            save_mode_config(&config);
+            let state = match darkmode::detect_current() {
+                Some(true) => "dark",
+                Some(false) => "light",
+                None => "undetectable",
+            };
+            println!("Mode: auto-os (currently {})", state);
+        }
+        ModeAction::AutoTime { dark_after, light_after } => {
+            if darkmode::parse_hhmm(&dark_after).is_none() {
+                eprintln!("Invalid time format for --dark-after: '{}' (use HH:MM)", dark_after);
+                std::process::exit(1);
+            }
+            if darkmode::parse_hhmm(&light_after).is_none() {
+                eprintln!("Invalid time format for --light-after: '{}' (use HH:MM)", light_after);
+                std::process::exit(1);
+            }
+            config.mode_preference = Some(ModePreference::AutoTime);
+            config.dark_after = dark_after.clone();
+            config.light_after = light_after.clone();
+            save_mode_config(&config);
+            let state = match darkmode::resolve_mode(&ModePreference::AutoTime, &dark_after, &light_after) {
+                Some(true) => "dark",
+                Some(false) => "light",
+                None => "unknown",
+            };
+            println!("Mode: auto-time (dark after {}, light after {}, currently {})", dark_after, light_after, state);
+        }
+        ModeAction::Off => {
+            config.mode_preference = None;
+            save_mode_config(&config);
+            println!("Mode: off (no filtering)");
+        }
+        ModeAction::Status => {
+            print_mode_status(&config);
+        }
+    }
+}
+
+fn save_mode_config(config: &collection::AppConfig) {
+    if let Err(e) = collection::save_config(config) {
+        eprintln!("Error saving config: {}", e);
+        std::process::exit(1);
+    }
+}
+
+fn print_mode_status(config: &collection::AppConfig) {
+    match &config.mode_preference {
+        None => println!("Mode: off (no filtering)"),
+        Some(pref) => {
+            let state = match darkmode::resolve_mode(pref, &config.dark_after, &config.light_after) {
+                Some(true) => "dark",
+                Some(false) => "light",
+                None => "undetectable",
+            };
+            match pref {
+                collection::ModePreference::Dark => println!("Mode: dark"),
+                collection::ModePreference::Light => println!("Mode: light"),
+                collection::ModePreference::AutoOs => {
+                    println!("Mode: auto-os (currently {})", state);
+                }
+                collection::ModePreference::AutoTime => {
+                    println!("Mode: auto-time (dark after {}, light after {}, currently {})",
+                        config.dark_after, config.light_after, state);
+                }
+            }
+        }
+    }
 }
 
 fn handle_collection(action: CollectionAction) {
@@ -453,6 +537,7 @@ fn handle_browse_input(app: &mut App, key: KeyCode) {
             }
             KeyCode::Char('s') => app.cycle_sort(),
             KeyCode::Char('d') => app.toggle_dark_filter(),
+            KeyCode::Char('m') => app.cycle_mode(),
             KeyCode::Char('n') => app.enter_creator("Untitled".to_string()),
             KeyCode::Char(']') => app.next_page(),
             KeyCode::Char('[') => app.prev_page(),

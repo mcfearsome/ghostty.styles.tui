@@ -1,12 +1,14 @@
 use std::fs;
+use std::sync::mpsc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use nix::sys::signal::{self, Signal};
 use nix::unistd::Pid;
 
 use crate::collection;
 use crate::cycling;
+use crate::darkmode;
 
 /// Parse an interval string like "30m", "1h", "90s" into a `Duration`.
 fn parse_interval(s: &str) -> Result<Duration, String> {
@@ -103,21 +105,82 @@ pub fn start() -> Result<(), String> {
     fs::write(&pid_file, my_pid.to_string())
         .map_err(|e| format!("Failed to write PID file: {}", e))?;
 
+    let mode_label = app_config
+        .mode_preference
+        .as_ref()
+        .map(|p| format!(", mode: {}", p.label()))
+        .unwrap_or_default();
     println!(
-        "Daemon started (PID {}) — collection '{}', interval {}",
-        my_pid, coll_name, interval_str
+        "Daemon started (PID {}) — collection '{}', interval {}{}",
+        my_pid, coll_name, interval_str, mode_label
     );
 
-    // Main loop: sleep then cycle
-    loop {
-        thread::sleep(interval);
+    // Spawn OS mode watcher if auto-os
+    let watcher_rx: Option<mpsc::Receiver<bool>> =
+        if app_config.mode_preference == Some(collection::ModePreference::AutoOs) {
+            Some(darkmode::spawn_watcher())
+        } else {
+            None
+        };
 
-        match cycling::apply_next() {
-            Ok(msg) => {
-                eprintln!("[daemon] {}", msg);
+    let mut next_cycle = Instant::now() + interval;
+
+    // For auto-time, calculate next boundary
+    let mut next_boundary: Option<Instant> =
+        if app_config.mode_preference == Some(collection::ModePreference::AutoTime) {
+            darkmode::seconds_until_boundary(&app_config.dark_after, &app_config.light_after)
+                .map(|s| Instant::now() + Duration::from_secs(s))
+        } else {
+            None
+        };
+
+    loop {
+        let now = Instant::now();
+        let mut sleep_dur = next_cycle.saturating_duration_since(now);
+
+        if let Some(boundary) = next_boundary {
+            let boundary_dur = boundary.saturating_duration_since(now);
+            sleep_dur = sleep_dur.min(boundary_dur);
+        }
+
+        // Sleep, but wake up for watcher events
+        let triggered_by_watcher = if let Some(ref rx) = watcher_rx {
+            matches!(rx.recv_timeout(sleep_dur), Ok(_))
+        } else {
+            thread::sleep(sleep_dur);
+            false
+        };
+
+        let now = Instant::now();
+
+        if triggered_by_watcher {
+            eprintln!("[daemon] OS dark mode changed, switching theme");
+            match cycling::apply_next() {
+                Ok(msg) => eprintln!("[daemon] {}", msg),
+                Err(e) => eprintln!("[daemon] Error: {}", e),
             }
-            Err(e) => {
-                eprintln!("[daemon] Error cycling theme: {}", e);
+        }
+
+        if now >= next_cycle {
+            match cycling::apply_next() {
+                Ok(msg) => eprintln!("[daemon] {}", msg),
+                Err(e) => eprintln!("[daemon] Error: {}", e),
+            }
+            next_cycle = now + interval;
+        }
+
+        if let Some(boundary) = next_boundary {
+            if now >= boundary {
+                eprintln!("[daemon] Time boundary crossed, switching theme");
+                match cycling::apply_next() {
+                    Ok(msg) => eprintln!("[daemon] {}", msg),
+                    Err(e) => eprintln!("[daemon] Error: {}", e),
+                }
+                next_boundary = darkmode::seconds_until_boundary(
+                    &app_config.dark_after,
+                    &app_config.light_after,
+                )
+                .map(|s| Instant::now() + Duration::from_secs(s));
             }
         }
     }

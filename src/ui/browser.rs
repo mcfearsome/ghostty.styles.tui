@@ -86,6 +86,12 @@ fn render_top_bar(f: &mut Frame, app: &App, area: Rect) {
             Style::default().fg(Color::Rgb(130, 200, 130)),
         ));
     }
+    if let Some(ref pref) = app.mode_preference {
+        filter_spans.push(Span::styled(
+            format!("[{}] ", pref.label()),
+            Style::default().fg(Color::Rgb(200, 170, 100)),
+        ));
+    }
     match app.dark_filter {
         Some(true) => filter_spans.push(Span::styled("dark ", Style::default().fg(DIM))),
         Some(false) => filter_spans.push(Span::styled("light ", Style::default().fg(DIM))),
@@ -249,6 +255,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
             ("t", "tags"),
             ("s", "sort"),
             ("d", "dark/light"),
+            ("m", "mode"),
             ("p", "preview"),
             ("a", "apply"),
             ("c", "collect"),
