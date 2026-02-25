@@ -1,5 +1,6 @@
 mod api;
 mod app;
+mod cli;
 mod config;
 mod preview;
 mod theme;
@@ -8,6 +9,7 @@ mod ui;
 use std::io;
 use std::time::Duration;
 
+use clap::Parser;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{
@@ -17,15 +19,76 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 
 use app::{App, InputMode, Screen};
+use cli::{Cli, Commands, CollectionAction, CycleAction};
 
 fn main() {
+    let cli = Cli::parse();
+
+    match cli.command {
+        None => run_tui(),
+        Some(cmd) => dispatch_command(cmd),
+    }
+}
+
+fn dispatch_command(cmd: Commands) {
+    match cmd {
+        Commands::Collection { action } => match action {
+            CollectionAction::Create { name } => {
+                eprintln!("collection create '{}': not yet implemented", name);
+            }
+            CollectionAction::List => {
+                eprintln!("collection list: not yet implemented");
+            }
+            CollectionAction::Show { name } => {
+                eprintln!("collection show '{}': not yet implemented", name);
+            }
+            CollectionAction::Add { collection, slug } => {
+                eprintln!(
+                    "collection add '{}' to '{}': not yet implemented",
+                    slug, collection
+                );
+            }
+            CollectionAction::Use { name } => {
+                eprintln!("collection use '{}': not yet implemented", name);
+            }
+            CollectionAction::Delete { name } => {
+                eprintln!("collection delete '{}': not yet implemented", name);
+            }
+        },
+        Commands::Next => {
+            eprintln!("next: not yet implemented");
+        }
+        Commands::Cycle { action } => match action {
+            CycleAction::Start => {
+                eprintln!("cycle start: not yet implemented");
+            }
+            CycleAction::Stop => {
+                eprintln!("cycle stop: not yet implemented");
+            }
+            CycleAction::Status => {
+                eprintln!("cycle status: not yet implemented");
+            }
+        },
+    }
+}
+
+fn run_tui() {
     // Ghostty detection
     let term_program = std::env::var("TERM_PROGRAM").unwrap_or_default();
     if term_program.to_lowercase() != "ghostty" {
         eprintln!();
-        eprintln!("  \x1b[1;35mghostty.styles\x1b[0m requires the \x1b[1mGhostty\x1b[0m terminal.");
+        eprintln!(
+            "  \x1b[1;35mghostty.styles\x1b[0m requires the \x1b[1mGhostty\x1b[0m terminal."
+        );
         eprintln!();
-        eprintln!("  Detected terminal: \x1b[33m{}\x1b[0m", if term_program.is_empty() { "unknown" } else { &term_program });
+        eprintln!(
+            "  Detected terminal: \x1b[33m{}\x1b[0m",
+            if term_program.is_empty() {
+                "unknown"
+            } else {
+                &term_program
+            }
+        );
         eprintln!("  Get Ghostty at: \x1b[4;36mhttps://ghostty.org\x1b[0m");
         eprintln!();
         std::process::exit(1);
@@ -62,11 +125,9 @@ fn run_app(
     loop {
         app.poll_background();
 
-        terminal.draw(|f| {
-            match app.screen {
-                Screen::Browse => ui::render_browser(f, app),
-                Screen::Detail | Screen::Confirm => ui::render_detail(f, app),
-            }
+        terminal.draw(|f| match app.screen {
+            Screen::Browse => ui::render_browser(f, app),
+            Screen::Detail | Screen::Confirm => ui::render_detail(f, app),
         })?;
 
         // Poll for events with a timeout so we can check background messages
