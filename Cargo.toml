@@ -10,6 +10,11 @@ readme = "README.md"
 keywords = ["ghostty", "terminal", "themes", "tui", "ratatui"]
 categories = ["command-line-utilities"]
 
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/ghostty-styles", dest = "/usr/bin/ghostty-styles", mode = "0755" },
+]
+
 [dependencies]
 ratatui = "0.29"
 crossterm = "0.28"
