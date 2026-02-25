@@ -4,6 +4,7 @@ mod cli;
 mod collection;
 mod config;
 mod cycling;
+mod daemon;
 mod preview;
 mod theme;
 mod ui;
@@ -21,7 +22,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 
 use app::{App, InputMode, Screen};
-use cli::{Cli, Commands, CollectionAction, CycleAction};
+use cli::{Cli, Commands, CollectionAction};
 
 fn main() {
     let cli = Cli::parse();
@@ -44,17 +45,18 @@ fn dispatch_command(cmd: Commands) {
                 }
             }
         }
-        Commands::Cycle { action } => match action {
-            CycleAction::Start => {
-                eprintln!("cycle start: not yet implemented");
+        Commands::Cycle { action } => {
+            use cli::CycleAction;
+            let result = match action {
+                CycleAction::Start => daemon::start(),
+                CycleAction::Stop => daemon::stop(),
+                CycleAction::Status => daemon::status(),
+            };
+            if let Err(e) = result {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
             }
-            CycleAction::Stop => {
-                eprintln!("cycle stop: not yet implemented");
-            }
-            CycleAction::Status => {
-                eprintln!("cycle status: not yet implemented");
-            }
-        },
+        }
     }
 }
 
