@@ -18,3 +18,16 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 dirs = "6"
 unicode-width = "0.2"
+
+[package.metadata.deb]
+maintainer = "mcfearsome"
+section = "utils"
+depends = "libc6, libssl3"
+extended-description = """\
+A TUI application for browsing and previewing Ghostty terminal themes. \
+Fetches themes from the ghostty-style.vercel.app API and lets users \
+search, filter, preview (via OSC escape sequences), and apply themes \
+directly to their Ghostty config file."""
+assets = [
+    ["target/release/ghostty-styles", "usr/bin/", "755"],
+]
