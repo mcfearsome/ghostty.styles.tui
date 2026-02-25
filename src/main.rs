@@ -938,7 +938,177 @@ fn handle_create_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) {
 }
 
 fn handle_create_meta_input(app: &mut App, key: KeyCode) {
-    let _ = (app, key); // TODO: Task 9
+    // First check if we're in editing mode
+    let is_editing = app
+        .create_meta_state
+        .as_ref()
+        .map_or(false, |m| m.editing);
+    let field_index = app.create_meta_state.as_ref().map_or(0, |m| m.field_index);
+
+    if is_editing {
+        let meta = match app.create_meta_state.as_mut() {
+            Some(m) => m,
+            None => return,
+        };
+        match field_index {
+            0 => {
+                // Editing title -- need to edit creator_state.title
+                // For Enter/Esc we can toggle editing off via meta.
+                // For char/backspace we must drop meta first and edit creator_state.
+                match key {
+                    KeyCode::Enter | KeyCode::Esc => {
+                        meta.editing = false;
+                    }
+                    _ => {
+                        let _ = meta;
+                        match key {
+                            KeyCode::Char(c) => {
+                                if let Some(ref mut creator) = app.creator_state {
+                                    creator.title.push(c);
+                                }
+                            }
+                            KeyCode::Backspace => {
+                                if let Some(ref mut creator) = app.creator_state {
+                                    creator.title.pop();
+                                }
+                            }
+                            _ => {}
+                        }
+                        return;
+                    }
+                }
+            }
+            1 => {
+                // Editing description
+                match key {
+                    KeyCode::Char(c) => meta.description.push(c),
+                    KeyCode::Backspace => {
+                        meta.description.pop();
+                    }
+                    KeyCode::Enter | KeyCode::Esc => {
+                        meta.editing = false;
+                    }
+                    _ => {}
+                }
+            }
+            2 => {
+                // Tag selection mode
+                let tag_list = [
+                    "dark",
+                    "light",
+                    "minimal",
+                    "colorful",
+                    "retro",
+                    "pastel",
+                    "high-contrast",
+                    "monochrome",
+                    "warm",
+                    "cool",
+                    "neon",
+                ];
+                match key {
+                    KeyCode::Char('j') | KeyCode::Down => {
+                        meta.tag_cursor = (meta.tag_cursor + 1).min(tag_list.len() - 1);
+                    }
+                    KeyCode::Char('k') | KeyCode::Up => {
+                        meta.tag_cursor = meta.tag_cursor.saturating_sub(1);
+                    }
+                    KeyCode::Char(' ') | KeyCode::Enter => {
+                        let tag = tag_list[meta.tag_cursor].to_string();
+                        if meta.tags.contains(&tag) {
+                            meta.tags.retain(|t| t != &tag);
+                        } else if meta.tags.len() < 5 {
+                            meta.tags.push(tag);
+                        }
+                    }
+                    KeyCode::Esc => {
+                        meta.editing = false;
+                    }
+                    _ => {}
+                }
+            }
+            3 => {
+                // Editing author name
+                match key {
+                    KeyCode::Char(c) => meta.author_name.push(c),
+                    KeyCode::Backspace => {
+                        meta.author_name.pop();
+                    }
+                    KeyCode::Enter | KeyCode::Esc => {
+                        meta.editing = false;
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    } else {
+        // Navigation mode -- no persistent mutable borrow on meta needed for actions
+        match key {
+            KeyCode::Char('j') | KeyCode::Down => {
+                if let Some(ref mut meta) = app.create_meta_state {
+                    meta.field_index = (meta.field_index + 1).min(4);
+                }
+            }
+            KeyCode::Char('k') | KeyCode::Up => {
+                if let Some(ref mut meta) = app.create_meta_state {
+                    meta.field_index = meta.field_index.saturating_sub(1);
+                }
+            }
+            KeyCode::Enter => {
+                if let Some(ref mut meta) = app.create_meta_state {
+                    if meta.field_index <= 3 {
+                        meta.editing = true;
+                    }
+                }
+            }
+            KeyCode::Char('a') => {
+                // Apply to Ghostty config
+                if let Some(ref state) = app.creator_state {
+                    match export::apply_created_theme(state) {
+                        Ok(path) => {
+                            app.status_message = Some(format!("Applied to {}", path));
+                        }
+                        Err(e) => {
+                            app.status_message = Some(format!("Error: {}", e));
+                        }
+                    }
+                }
+            }
+            KeyCode::Char('e') => {
+                // Export to file
+                if let Some(ref state) = app.creator_state {
+                    match export::export_theme(state) {
+                        Ok(path) => {
+                            app.status_message = Some(format!("Exported to {}", path));
+                        }
+                        Err(e) => {
+                            app.status_message = Some(format!("Error: {}", e));
+                        }
+                    }
+                }
+            }
+            KeyCode::Char('u') => {
+                // Upload
+                if let Some(ref state) = app.creator_state {
+                    match export::upload_theme(state) {
+                        Ok(msg) => {
+                            app.status_message = Some(msg);
+                        }
+                        Err(e) => {
+                            app.status_message = Some(format!("Error: {}", e));
+                        }
+                    }
+                }
+            }
+            KeyCode::Esc => {
+                // Back to creator
+                app.create_meta_state = None;
+                app.screen = Screen::Create;
+            }
+            _ => {}
+        }
+    }
 }
 
 fn app_area(_app: &App) -> ratatui::layout::Rect {
