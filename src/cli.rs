@@ -27,6 +27,34 @@ pub enum Commands {
         #[arg(long)]
         from: Option<String>,
     },
+    /// Set dark/light mode preference
+    Mode {
+        #[command(subcommand)]
+        action: ModeAction,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum ModeAction {
+    /// Set mode to dark (only dark themes)
+    Dark,
+    /// Set mode to light (only light themes)
+    Light,
+    /// Auto-detect from OS dark mode setting
+    AutoOs,
+    /// Auto-switch based on time of day
+    AutoTime {
+        /// Time to switch to dark themes (HH:MM, default 19:00)
+        #[arg(long, default_value = "19:00")]
+        dark_after: String,
+        /// Time to switch to light themes (HH:MM, default 07:00)
+        #[arg(long, default_value = "07:00")]
+        light_after: String,
+    },
+    /// Disable mode filtering
+    Off,
+    /// Show current mode status
+    Status,
 }
 
 #[derive(Subcommand)]

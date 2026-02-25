@@ -27,15 +27,56 @@ pub enum CycleOrder {
     Shuffle,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum ModePreference {
+    Dark,
+    Light,
+    AutoOs,
+    AutoTime,
+}
+
+impl ModePreference {
+    pub fn label(&self) -> &'static str {
+        match self {
+            ModePreference::Dark => "dark",
+            ModePreference::Light => "light",
+            ModePreference::AutoOs => "auto-os",
+            ModePreference::AutoTime => "auto-time",
+        }
+    }
+
+    pub fn next(&self) -> Option<Self> {
+        match self {
+            ModePreference::Dark => Some(ModePreference::Light),
+            ModePreference::Light => Some(ModePreference::AutoOs),
+            ModePreference::AutoOs => Some(ModePreference::AutoTime),
+            ModePreference::AutoTime => None,
+        }
+    }
+}
+
+fn default_dark_after() -> String { "19:00".to_string() }
+fn default_light_after() -> String { "07:00".to_string() }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     pub active_collection: Option<String>,
+    #[serde(default)]
+    pub mode_preference: Option<ModePreference>,
+    #[serde(default = "default_dark_after")]
+    pub dark_after: String,
+    #[serde(default = "default_light_after")]
+    pub light_after: String,
 }
 
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
             active_collection: None,
+            mode_preference: None,
+            dark_after: default_dark_after(),
+            light_after: default_light_after(),
         }
     }
 }

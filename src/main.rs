@@ -27,7 +27,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 
 use app::{App, CollectionsMode, InputMode, Screen};
-use cli::{Cli, Commands, CollectionAction};
+use cli::{Cli, Commands, CollectionAction, ModeAction};
 
 fn main() {
     let cli = Cli::parse();
@@ -65,7 +65,14 @@ fn dispatch_command(cmd: Commands) {
         Commands::Create { from } => {
             run_tui_create(from);
         }
+        Commands::Mode { action } => {
+            handle_mode(action);
+        }
     }
+}
+
+fn handle_mode(action: ModeAction) {
+    let _ = action; // TODO: Task 5
 }
 
 fn handle_collection(action: CollectionAction) {
