@@ -6,6 +6,7 @@ mod config;
 mod cycling;
 mod daemon;
 mod preview;
+mod shell_hook;
 mod theme;
 mod ui;
 
@@ -208,9 +209,26 @@ fn handle_collection(action: CollectionAction) {
     }
 }
 
-/// Stub for daemon/hook setup — will be implemented in Task 6.
-fn prompt_daemon_and_hook(_name: &str) {
-    // No-op for now
+fn prompt_daemon_and_hook(name: &str) {
+    use std::io::{self, BufRead, Write};
+
+    // Ask about interval
+    print!("Set a cycling interval? (e.g., 30m, 1h, or press Enter to skip): ");
+    let _ = io::stdout().flush();
+    let mut input = String::new();
+    if io::stdin().lock().read_line(&mut input).is_ok() {
+        let trimmed = input.trim();
+        if !trimmed.is_empty() {
+            if let Ok(mut coll) = collection::load_collection(name) {
+                coll.interval = Some(trimmed.to_string());
+                let _ = collection::save_collection(&coll);
+                println!("Interval set to '{}'", trimmed);
+            }
+        }
+    }
+
+    // Ask about shell hook
+    shell_hook::prompt_install();
 }
 
 fn run_tui() {
