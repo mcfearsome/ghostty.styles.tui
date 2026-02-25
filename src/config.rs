@@ -42,7 +42,7 @@ pub(crate) fn filter_color_keys(content: &str) -> String {
                 return true;
             }
             let key = trimmed.split('=').next().unwrap_or("").trim();
-            !COLOR_KEYS.iter().any(|k| key == *k)
+            !COLOR_KEYS.contains(&key)
         })
         .collect();
     filtered_lines.join("\n")

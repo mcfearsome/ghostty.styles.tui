@@ -1081,7 +1081,7 @@ fn handle_create_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) {
 
 fn handle_create_meta_input(app: &mut App, key: KeyCode) {
     // First check if we're in editing mode
-    let is_editing = app.create_meta_state.as_ref().map_or(false, |m| m.editing);
+    let is_editing = app.create_meta_state.as_ref().is_some_and(|m| m.editing);
     let field_index = app.create_meta_state.as_ref().map_or(0, |m| m.field_index);
 
     if is_editing {
@@ -1113,7 +1113,6 @@ fn handle_create_meta_input(app: &mut App, key: KeyCode) {
                             }
                             _ => {}
                         }
-                        return;
                     }
                 }
             }

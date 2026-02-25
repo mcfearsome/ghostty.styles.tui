@@ -258,7 +258,7 @@ fn render_slider_mode(
             is_focused,
             |pos| {
                 // Color at this position: vary hue, keep s/l fixed
-                let h = HslColor::new(pos, color.s, color.l.max(20.0).min(80.0));
+                let h = HslColor::new(pos, color.s, color.l.clamp(20.0, 80.0));
                 h.to_ratatui_color()
             },
         );
@@ -284,7 +284,7 @@ fn render_slider_mode(
             100.0,
             is_focused,
             |pos| {
-                let h = HslColor::new(color.h, pos, color.l.max(20.0).min(80.0));
+                let h = HslColor::new(color.h, pos, color.l.clamp(20.0, 80.0));
                 h.to_ratatui_color()
             },
         );
@@ -469,6 +469,7 @@ fn render_hex_input_mode(
 /// Format: `  H: ████████░░ 240°`
 /// Each block character is colored at that position's value via `color_fn`.
 /// The `░` marks the current value position.
+#[allow(clippy::too_many_arguments)]
 fn render_slider_row<F>(
     f: &mut Frame,
     x: u16,

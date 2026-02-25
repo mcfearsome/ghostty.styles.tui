@@ -404,6 +404,7 @@ impl CreatorState {
     // -----------------------------------------------------------------------
 
     /// Return the `ColorField` for the current `field_index`.
+    #[allow(dead_code)]
     pub fn current_field(&self) -> ColorField {
         let all = ColorField::all();
         all[self.field_index.min(all.len() - 1)]
@@ -506,7 +507,7 @@ impl CreatorState {
         // Palette index 8: bright black — lighter than palette 0
         self.colors[14] = HslColor::new(bg.h, bg.s, (bg.l + 20.0).min(50.0));
         // Palette index 15: bright white — brighter fg
-        self.colors[21] = HslColor::new(fg.h, fg.s.min(10.0), fg.l.max(90.0).min(100.0));
+        self.colors[21] = HslColor::new(fg.h, fg.s.min(10.0), fg.l.clamp(90.0, 100.0));
 
         // 6 accent hues at 60-degree intervals from the foreground hue.
         // The canonical ANSI order is: red, green, yellow, blue, magenta, cyan.

@@ -17,12 +17,12 @@ fn parse_interval(s: &str) -> Result<Duration, String> {
         return Err("Interval string is empty".to_string());
     }
 
-    let (num_str, suffix) = if s.ends_with('h') {
-        (&s[..s.len() - 1], "h")
-    } else if s.ends_with('m') {
-        (&s[..s.len() - 1], "m")
-    } else if s.ends_with('s') {
-        (&s[..s.len() - 1], "s")
+    let (num_str, suffix) = if let Some(stripped) = s.strip_suffix('h') {
+        (stripped, "h")
+    } else if let Some(stripped) = s.strip_suffix('m') {
+        (stripped, "m")
+    } else if let Some(stripped) = s.strip_suffix('s') {
+        (stripped, "s")
     } else {
         return Err(format!(
             "Invalid interval '{}': must end with 's', 'm', or 'h'",
@@ -142,7 +142,7 @@ pub fn start() -> Result<(), String> {
 
         // Sleep, but wake up for watcher events
         let triggered_by_watcher = if let Some(ref rx) = watcher_rx {
-            matches!(rx.recv_timeout(sleep_dur), Ok(_))
+            rx.recv_timeout(sleep_dur).is_ok()
         } else {
             thread::sleep(sleep_dur);
             false

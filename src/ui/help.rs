@@ -11,8 +11,8 @@ const DIM: Color = Color::Rgb(120, 120, 140);
 
 pub fn render_help(f: &mut Frame, app: &App) {
     let area = f.area();
-    let width = area.width.saturating_sub(6).min(96).max(40);
-    let height = area.height.saturating_sub(4).min(30).max(12);
+    let width = area.width.saturating_sub(6).clamp(40, 96);
+    let height = area.height.saturating_sub(4).clamp(12, 30);
     let x = area.x + area.width.saturating_sub(width) / 2;
     let y = area.y + area.height.saturating_sub(height) / 2;
     let popup = Rect::new(x, y, width, height);

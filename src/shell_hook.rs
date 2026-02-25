@@ -69,19 +69,17 @@ pub fn prompt_install() -> bool {
     let _ = io::stdout().flush();
 
     let mut input = String::new();
-    if io::stdin().lock().read_line(&mut input).is_ok() {
-        if input.trim().eq_ignore_ascii_case("y") {
-            match install(&rc_path) {
-                Ok(_) => {
-                    println!(
-                        "Hook installed. Restart your shell or run: source {}",
-                        rc_path.display()
-                    );
-                    return true;
-                }
-                Err(e) => {
-                    eprintln!("Failed to install hook: {}", e);
-                }
+    if io::stdin().lock().read_line(&mut input).is_ok() && input.trim().eq_ignore_ascii_case("y") {
+        match install(&rc_path) {
+            Ok(_) => {
+                println!(
+                    "Hook installed. Restart your shell or run: source {}",
+                    rc_path.display()
+                );
+                return true;
+            }
+            Err(e) => {
+                eprintln!("Failed to install hook: {}", e);
             }
         }
     }
