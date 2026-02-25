@@ -19,7 +19,7 @@ pub fn render_browser(f: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3), // top bar
-            Constraint::Min(5),   // main
+            Constraint::Min(5),    // main
             Constraint::Length(1), // status/bottom bar
         ])
         .split(size);
@@ -34,7 +34,9 @@ pub fn render_browser(f: &mut Frame, app: &App) {
     }
 
     // Collection popup overlay
-    if app.input_mode == InputMode::CollectionSelect || app.input_mode == InputMode::CollectionCreate {
+    if app.input_mode == InputMode::CollectionSelect
+        || app.input_mode == InputMode::CollectionCreate
+    {
         render_collection_popup(f, app, size);
     }
 }
@@ -44,15 +46,23 @@ fn render_top_bar(f: &mut Frame, app: &App, area: Rect) {
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Length(22), // title
-            Constraint::Min(20),   // search
+            Constraint::Min(20),    // search
             Constraint::Length(30), // filters info
         ])
         .split(area);
 
     // Title
     let title = Paragraph::new(Line::from(vec![
-        Span::styled(" ghostty", Style::default().fg(ACCENT).add_modifier(Modifier::BOLD)),
-        Span::styled(".styles", Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            " ghostty",
+            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            ".styles",
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
+        ),
     ]))
     .block(Block::default().borders(Borders::BOTTOM));
     f.render_widget(title, chunks[0]);
@@ -101,8 +111,8 @@ fn render_top_bar(f: &mut Frame, app: &App, area: Rect) {
         format!("p{}/{} ", app.page, app.total_pages.max(1)),
         Style::default().fg(DIM),
     ));
-    let filters = Paragraph::new(Line::from(filter_spans))
-        .block(Block::default().borders(Borders::BOTTOM));
+    let filters =
+        Paragraph::new(Line::from(filter_spans)).block(Block::default().borders(Borders::BOTTOM));
     f.render_widget(filters, chunks[2]);
 }
 
@@ -148,10 +158,7 @@ fn render_main(f: &mut Frame, app: &App, area: Rect) {
     // Split: theme list | preview
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(45),
-            Constraint::Percentage(55),
-        ])
+        .constraints([Constraint::Percentage(45), Constraint::Percentage(55)])
         .split(area);
 
     render_theme_list(f, app, chunks[0]);
@@ -175,8 +182,16 @@ fn render_theme_list(f: &mut Frame, app: &App, area: Rect) {
                 Span::styled(
                     truncate(&theme.title, 28),
                     Style::default()
-                        .fg(if is_selected { Color::White } else { Color::Gray })
-                        .add_modifier(if is_selected { Modifier::BOLD } else { Modifier::empty() }),
+                        .fg(if is_selected {
+                            Color::White
+                        } else {
+                            Color::Gray
+                        })
+                        .add_modifier(if is_selected {
+                            Modifier::BOLD
+                        } else {
+                            Modifier::empty()
+                        }),
                 ),
             ];
 
@@ -199,17 +214,15 @@ fn render_theme_list(f: &mut Frame, app: &App, area: Rect) {
         })
         .collect();
 
-    let list = List::new(items)
-        .highlight_style(Style::default())
-        .block(
-            Block::default()
-                .borders(Borders::RIGHT)
-                .border_style(Style::default().fg(Color::Rgb(60, 60, 80)))
-                .title(Span::styled(
-                    format!(" Themes ({}) ", app.total_results),
-                    Style::default().fg(ACCENT),
-                )),
-        );
+    let list = List::new(items).highlight_style(Style::default()).block(
+        Block::default()
+            .borders(Borders::RIGHT)
+            .border_style(Style::default().fg(Color::Rgb(60, 60, 80)))
+            .title(Span::styled(
+                format!(" Themes ({}) ", app.total_results),
+                Style::default().fg(ACCENT),
+            )),
+    );
 
     let mut state = ListState::default().with_selected(Some(app.selected));
     f.render_stateful_widget(list, area, &mut state);
@@ -242,7 +255,12 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
         ));
     } else {
         let osc_indicator = if app.osc_preview_active {
-            Span::styled(" [LIVE] ", Style::default().fg(Color::Rgb(255, 150, 50)).add_modifier(Modifier::BOLD))
+            Span::styled(
+                " [LIVE] ",
+                Style::default()
+                    .fg(Color::Rgb(255, 150, 50))
+                    .add_modifier(Modifier::BOLD),
+            )
         } else {
             Span::raw("")
         };
@@ -262,6 +280,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
             ("C", "collections"),
             ("]/[", "page"),
             ("n", "new"),
+            ("?", "help"),
             ("q", "quit"),
         ];
         for (key, desc) in hints {
@@ -269,10 +288,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
                 format!(" {} ", key),
                 Style::default().fg(ACCENT),
             ));
-            spans.push(Span::styled(
-                format!("{} ", desc),
-                Style::default().fg(DIM),
-            ));
+            spans.push(Span::styled(format!("{} ", desc), Style::default().fg(DIM)));
         }
     }
 
@@ -340,7 +356,10 @@ fn render_collection_popup(f: &mut Frame, app: &App, area: Rect) {
         ];
         let paragraph = Paragraph::new(lines).block(
             Block::default()
-                .title(Span::styled(" New Collection ", Style::default().fg(ACCENT)))
+                .title(Span::styled(
+                    " New Collection ",
+                    Style::default().fg(ACCENT),
+                ))
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(ACCENT)),
         );
@@ -372,7 +391,10 @@ fn render_collection_popup(f: &mut Frame, app: &App, area: Rect) {
 
         let list = List::new(items).block(
             Block::default()
-                .title(Span::styled(" Add to Collection ", Style::default().fg(ACCENT)))
+                .title(Span::styled(
+                    " Add to Collection ",
+                    Style::default().fg(ACCENT),
+                ))
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(ACCENT)),
         );
@@ -381,7 +403,12 @@ fn render_collection_popup(f: &mut Frame, app: &App, area: Rect) {
         // Render hint at bottom of popup
         let hint_y = popup_area.y + popup_area.height.saturating_sub(1);
         if hint_y < area.height {
-            let hint_area = Rect::new(popup_area.x + 1, hint_y, popup_area.width.saturating_sub(2), 1);
+            let hint_area = Rect::new(
+                popup_area.x + 1,
+                hint_y,
+                popup_area.width.saturating_sub(2),
+                1,
+            );
             let hint = Paragraph::new(Line::from(vec![
                 Span::styled("n", Style::default().fg(ACCENT)),
                 Span::styled(" new  ", Style::default().fg(DIM)),

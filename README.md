@@ -69,7 +69,7 @@ Must be run inside a Ghostty terminal session.
 | `r` | Refresh |
 | `c` | Add to collection |
 | `C` | Manage collections |
-| `q` / `Esc` | Quit |
+| `q` | Quit |
 
 #### Detail screen
 

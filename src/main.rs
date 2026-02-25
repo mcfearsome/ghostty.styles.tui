@@ -5,9 +5,10 @@ mod collection;
 mod config;
 mod creator;
 mod cycling;
-mod darkmode;
 mod daemon;
+mod darkmode;
 mod export;
+mod ghostty;
 mod preview;
 mod shell_hook;
 mod theme;
@@ -28,7 +29,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 
 use app::{App, CollectionsMode, InputMode, Screen};
-use cli::{Cli, Commands, CollectionAction, ModeAction};
+use cli::{Cli, CollectionAction, Commands, ModeAction};
 
 fn main() {
     let cli = Cli::parse();
@@ -42,15 +43,13 @@ fn main() {
 fn dispatch_command(cmd: Commands) {
     match cmd {
         Commands::Collection { action } => handle_collection(action),
-        Commands::Next => {
-            match cycling::apply_next() {
-                Ok(msg) => println!("{}", msg),
-                Err(e) => {
-                    eprintln!("Error: {}", e);
-                    std::process::exit(1);
-                }
+        Commands::Next => match cycling::apply_next() {
+            Ok(msg) => println!("{}", msg),
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
             }
-        }
+        },
         Commands::Cycle { action } => {
             use cli::CycleAction;
             let result = match action {
@@ -98,25 +97,41 @@ fn handle_mode(action: ModeAction) {
             };
             println!("Mode: auto-os (currently {})", state);
         }
-        ModeAction::AutoTime { dark_after, light_after } => {
+        ModeAction::AutoTime {
+            dark_after,
+            light_after,
+        } => {
             if darkmode::parse_hhmm(&dark_after).is_none() {
-                eprintln!("Invalid time format for --dark-after: '{}' (use HH:MM)", dark_after);
+                eprintln!(
+                    "Invalid time format for --dark-after: '{}' (use HH:MM)",
+                    dark_after
+                );
                 std::process::exit(1);
             }
             if darkmode::parse_hhmm(&light_after).is_none() {
-                eprintln!("Invalid time format for --light-after: '{}' (use HH:MM)", light_after);
+                eprintln!(
+                    "Invalid time format for --light-after: '{}' (use HH:MM)",
+                    light_after
+                );
                 std::process::exit(1);
             }
             config.mode_preference = Some(ModePreference::AutoTime);
             config.dark_after = dark_after.clone();
             config.light_after = light_after.clone();
             save_mode_config(&config);
-            let state = match darkmode::resolve_mode(&ModePreference::AutoTime, &dark_after, &light_after) {
+            let state = match darkmode::resolve_mode(
+                &ModePreference::AutoTime,
+                &dark_after,
+                &light_after,
+            ) {
                 Some(true) => "dark",
                 Some(false) => "light",
                 None => "unknown",
             };
-            println!("Mode: auto-time (dark after {}, light after {}, currently {})", dark_after, light_after, state);
+            println!(
+                "Mode: auto-time (dark after {}, light after {}, currently {})",
+                dark_after, light_after, state
+            );
         }
         ModeAction::Off => {
             config.mode_preference = None;
@@ -140,7 +155,8 @@ fn print_mode_status(config: &collection::AppConfig) {
     match &config.mode_preference {
         None => println!("Mode: off (no filtering)"),
         Some(pref) => {
-            let state = match darkmode::resolve_mode(pref, &config.dark_after, &config.light_after) {
+            let state = match darkmode::resolve_mode(pref, &config.dark_after, &config.light_after)
+            {
                 Some(true) => "dark",
                 Some(false) => "light",
                 None => "undetectable",
@@ -152,8 +168,10 @@ fn print_mode_status(config: &collection::AppConfig) {
                     println!("Mode: auto-os (currently {})", state);
                 }
                 collection::ModePreference::AutoTime => {
-                    println!("Mode: auto-time (dark after {}, light after {}, currently {})",
-                        config.dark_after, config.light_after, state);
+                    println!(
+                        "Mode: auto-time (dark after {}, light after {}, currently {})",
+                        config.dark_after, config.light_after, state
+                    );
                 }
             }
         }
@@ -162,18 +180,16 @@ fn print_mode_status(config: &collection::AppConfig) {
 
 fn handle_collection(action: CollectionAction) {
     match action {
-        CollectionAction::Create { name } => {
-            match collection::create_collection(&name) {
-                Ok(_) => {
-                    println!("Created collection '{}'", name);
-                    prompt_daemon_and_hook(&name);
-                }
-                Err(e) => {
-                    eprintln!("Error creating collection: {}", e);
-                    std::process::exit(1);
-                }
+        CollectionAction::Create { name } => match collection::create_collection(&name) {
+            Ok(created) => {
+                println!("Created collection '{}'", created.name);
+                prompt_daemon_and_hook(&created.name);
             }
-        }
+            Err(e) => {
+                eprintln!("Error creating collection: {}", e);
+                std::process::exit(1);
+            }
+        },
         CollectionAction::List => {
             let names = collection::list_collections();
             if names.is_empty() {
@@ -184,7 +200,11 @@ fn handle_collection(action: CollectionAction) {
             let config = collection::load_config();
             let active = config.active_collection.as_deref();
             for name in &names {
-                let marker = if active == Some(name.as_str()) { " (active)" } else { "" };
+                let marker = if active == Some(name.as_str()) {
+                    " (active)"
+                } else {
+                    ""
+                };
                 match collection::load_collection(name) {
                     Ok(col) => {
                         let count = col.themes.len();
@@ -197,40 +217,38 @@ fn handle_collection(action: CollectionAction) {
                 }
             }
         }
-        CollectionAction::Show { name } => {
-            match collection::load_collection(&name) {
-                Ok(col) => {
-                    let order_str = match col.order {
-                        collection::CycleOrder::Sequential => "sequential",
-                        collection::CycleOrder::Shuffle => "shuffle",
-                    };
-                    let interval_str = col
-                        .interval
-                        .as_deref()
-                        .unwrap_or("not set");
-                    println!("Collection: {}", col.name);
-                    println!("Themes:     {}", col.themes.len());
-                    println!("Order:      {}", order_str);
-                    println!("Interval:   {}", interval_str);
-                    if col.themes.is_empty() {
-                        println!();
-                        println!("No themes yet. Add one with:");
-                        println!("  ghostty-styles collection add {} <slug>", name);
-                    } else {
-                        println!();
-                        for (i, theme) in col.themes.iter().enumerate() {
-                            let marker = if i == col.current_index { " <-" } else { "" };
-                            println!("  {}. {}{}", i + 1, theme.title, marker);
-                        }
+        CollectionAction::Show { name } => match collection::load_collection(&name) {
+            Ok(col) => {
+                let order_str = match col.order {
+                    collection::CycleOrder::Sequential => "sequential",
+                    collection::CycleOrder::Shuffle => "shuffle",
+                };
+                let interval_str = col.interval.as_deref().unwrap_or("not set");
+                println!("Collection: {}", col.name);
+                println!("Themes:     {}", col.themes.len());
+                println!("Order:      {}", order_str);
+                println!("Interval:   {}", interval_str);
+                if col.themes.is_empty() {
+                    println!();
+                    println!("No themes yet. Add one with:");
+                    println!("  ghostty-styles collection add {} <slug>", name);
+                } else {
+                    println!();
+                    for (i, theme) in col.themes.iter().enumerate() {
+                        let marker = if i == col.current_index { " <-" } else { "" };
+                        println!("  {}. {}{}", i + 1, theme.title, marker);
                     }
                 }
-                Err(e) => {
-                    eprintln!("Error: {}", e);
-                    std::process::exit(1);
-                }
             }
-        }
-        CollectionAction::Add { collection: coll_name, slug } => {
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
+        },
+        CollectionAction::Add {
+            collection: coll_name,
+            slug,
+        } => {
             // Fetch theme from API
             match api::fetch_config_by_id(&slug) {
                 Ok(config) => {
@@ -294,7 +312,10 @@ fn handle_collection(action: CollectionAction) {
                     if config.active_collection.as_deref() == Some(&name) {
                         config.active_collection = None;
                         if let Err(e) = collection::save_config(&config) {
-                            eprintln!("Warning: collection deleted but failed to update config: {}", e);
+                            eprintln!(
+                                "Warning: collection deleted but failed to update config: {}",
+                                e
+                            );
                         }
                     }
                     println!("Deleted collection '{}'", name);
@@ -335,9 +356,7 @@ fn run_tui() {
     let term_program = std::env::var("TERM_PROGRAM").unwrap_or_default();
     if term_program.to_lowercase() != "ghostty" {
         eprintln!();
-        eprintln!(
-            "  \x1b[1;35mghostty.styles\x1b[0m requires the \x1b[1mGhostty\x1b[0m terminal."
-        );
+        eprintln!("  \x1b[1;35mghostty.styles\x1b[0m requires the \x1b[1mGhostty\x1b[0m terminal.");
         eprintln!();
         eprintln!(
             "  Detected terminal: \x1b[33m{}\x1b[0m",
@@ -368,8 +387,12 @@ fn run_tui() {
     // Cleanup
     app.cleanup();
     disable_raw_mode().expect("Failed to disable raw mode");
-    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)
-        .expect("Failed to leave alternate screen");
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )
+    .expect("Failed to leave alternate screen");
 
     if let Err(e) = result {
         eprintln!("Error: {}", e);
@@ -419,8 +442,12 @@ fn run_tui_create(from_slug: Option<String>) {
 
     app.cleanup();
     disable_raw_mode().expect("Failed to disable raw mode");
-    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)
-        .expect("Failed to leave alternate screen");
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )
+    .expect("Failed to leave alternate screen");
 
     if let Err(e) = result {
         eprintln!("Error: {}", e);
@@ -435,12 +462,17 @@ fn run_app(
     loop {
         app.poll_background();
 
-        terminal.draw(|f| match app.screen {
-            Screen::Browse => ui::render_browser(f, app),
-            Screen::Detail | Screen::Confirm => ui::render_detail(f, app),
-            Screen::Collections => ui::render_collections(f, app),
-            Screen::Create => ui::render_creator(f, app),
-            Screen::CreateMeta => ui::render_create_meta(f, app),
+        terminal.draw(|f| {
+            match app.screen {
+                Screen::Browse => ui::render_browser(f, app),
+                Screen::Detail | Screen::Confirm => ui::render_detail(f, app),
+                Screen::Collections => ui::render_collections(f, app),
+                Screen::Create => ui::render_creator(f, app),
+                Screen::CreateMeta => ui::render_create_meta(f, app),
+            }
+            if app.show_help {
+                ui::render_help(f, app);
+            }
         })?;
 
         // Poll for events with a timeout so we can check background messages
@@ -452,15 +484,27 @@ fn run_app(
                         continue;
                     }
 
-                    // Clear status message on any keypress
-                    app.status_message = None;
-
                     // Ctrl+C always quits
                     if key.modifiers.contains(KeyModifiers::CONTROL)
                         && key.code == KeyCode::Char('c')
                     {
                         app.should_quit = true;
+                        continue;
                     }
+
+                    // Global help modal toggle
+                    if key.code == KeyCode::Char('?') {
+                        app.show_help = !app.show_help;
+                        continue;
+                    }
+                    if app.show_help {
+                        // Any non-'?' key dismisses help without triggering actions.
+                        app.show_help = false;
+                        continue;
+                    }
+
+                    // Clear status message on normal keypress
+                    app.status_message = None;
 
                     match app.screen {
                         Screen::Browse => handle_browse_input(app, key.code),
@@ -518,7 +562,7 @@ fn handle_browse_input(app: &mut App, key: KeyCode) {
             _ => {}
         },
         InputMode::Normal => match key {
-            KeyCode::Char('q') | KeyCode::Esc => {
+            KeyCode::Char('q') => {
                 app.should_quit = true;
             }
             KeyCode::Char('j') | KeyCode::Down => app.select_next(),
@@ -563,14 +607,19 @@ fn handle_browse_input(app: &mut App, key: KeyCode) {
         InputMode::CollectionSelect => match key {
             KeyCode::Char('j') | KeyCode::Down => {
                 if !app.collection_names.is_empty() {
-                    app.collection_popup_cursor = (app.collection_popup_cursor + 1).min(app.collection_names.len() - 1);
+                    app.collection_popup_cursor =
+                        (app.collection_popup_cursor + 1).min(app.collection_names.len() - 1);
                 }
             }
             KeyCode::Char('k') | KeyCode::Up => {
                 app.collection_popup_cursor = app.collection_popup_cursor.saturating_sub(1);
             }
             KeyCode::Enter => {
-                if let Some(name) = app.collection_names.get(app.collection_popup_cursor).cloned() {
+                if let Some(name) = app
+                    .collection_names
+                    .get(app.collection_popup_cursor)
+                    .cloned()
+                {
                     app.add_to_collection(&name);
                 }
             }
@@ -646,8 +695,9 @@ fn handle_collections_input(app: &mut App, key: KeyCode) {
                 let name = app.collections_input.trim().to_string();
                 if !name.is_empty() {
                     match collection::create_collection(&name) {
-                        Ok(_) => {
-                            app.status_message = Some(format!("Created collection '{}'", name));
+                        Ok(created) => {
+                            app.status_message =
+                                Some(format!("Created collection '{}'", created.name));
                             app.refresh_collections();
                         }
                         Err(e) => {
@@ -986,8 +1036,7 @@ fn handle_create_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) {
             KeyCode::Char('g') => {
                 state.gen_algorithm = state.gen_algorithm.toggle();
                 state.generate_palette();
-                app.status_message =
-                    Some(format!("Algorithm: {}", state.gen_algorithm.label()));
+                app.status_message = Some(format!("Algorithm: {}", state.gen_algorithm.label()));
                 if state.osc_preview {
                     let config = state.build_preview_config();
                     preview::apply_osc_preview(&config);
@@ -1032,10 +1081,7 @@ fn handle_create_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) {
 
 fn handle_create_meta_input(app: &mut App, key: KeyCode) {
     // First check if we're in editing mode
-    let is_editing = app
-        .create_meta_state
-        .as_ref()
-        .map_or(false, |m| m.editing);
+    let is_editing = app.create_meta_state.as_ref().map_or(false, |m| m.editing);
     let field_index = app.create_meta_state.as_ref().map_or(0, |m| m.field_index);
 
     if is_editing {
@@ -1157,18 +1203,37 @@ fn handle_create_meta_input(app: &mut App, key: KeyCode) {
             }
             KeyCode::Char('a') => {
                 // Apply to Ghostty config
-                if let Some(ref state) = app.creator_state {
+                let (preview_config, apply_result) = {
+                    let state = match app.creator_state.as_ref() {
+                        Some(s) => s,
+                        None => return,
+                    };
                     if state.title.trim().is_empty() {
                         app.status_message = Some("Title cannot be empty".into());
-                    } else {
-                        match export::apply_created_theme(state) {
-                            Ok(path) => {
-                                app.status_message = Some(format!("Applied to {}", path));
-                            }
-                            Err(e) => {
-                                app.status_message = Some(format!("Error: {}", e));
-                            }
-                        }
+                        return;
+                    }
+                    (
+                        state.build_preview_config(),
+                        export::apply_created_theme(state),
+                    )
+                };
+
+                match apply_result {
+                    Ok(path) => {
+                        preview::apply_osc_preview(&preview_config);
+                        app.clear_preview_restore_state();
+                        let status = match ghostty::try_reload_config() {
+                            Ok(_) => format!("Applied to {} (reloaded)", path),
+                            Err(_) => format!(
+                                "Applied to {} (reload with {})",
+                                path,
+                                ghostty::reload_shortcut_label()
+                            ),
+                        };
+                        app.status_message = Some(status);
+                    }
+                    Err(e) => {
+                        app.status_message = Some(format!("Error: {}", e));
                     }
                 }
             }

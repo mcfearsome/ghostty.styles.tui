@@ -95,6 +95,7 @@ pub struct App {
     pub creator_state: Option<crate::creator::CreatorState>,
     pub create_meta_state: Option<CreateMetaState>,
     pub mode_preference: Option<crate::collection::ModePreference>,
+    pub show_help: bool,
 }
 
 impl App {
@@ -141,6 +142,7 @@ impl App {
             creator_state: None,
             create_meta_state: None,
             mode_preference: mode_pref,
+            show_help: false,
         }
     }
 
@@ -293,7 +295,19 @@ impl App {
         if let Some(theme) = self.themes.get(self.selected).cloned() {
             match crate::config::apply_theme(&theme) {
                 Ok(path) => {
-                    self.status_message = Some(format!("Applied '{}' to {}", theme.title, path));
+                    // Keep the newly applied theme visible and prevent cleanup from restoring old preview colors.
+                    preview::apply_osc_preview(&theme);
+                    self.clear_preview_restore_state();
+                    let status = match crate::ghostty::try_reload_config() {
+                        Ok(_) => format!("Applied '{}' to {} (reloaded)", theme.title, path),
+                        Err(_) => format!(
+                            "Applied '{}' to {} (reload with {})",
+                            theme.title,
+                            path,
+                            crate::ghostty::reload_shortcut_label()
+                        ),
+                    };
+                    self.status_message = Some(status);
                     self.screen = Screen::Browse;
                 }
                 Err(e) => {
@@ -301,6 +315,14 @@ impl App {
                     self.screen = Screen::Browse;
                 }
             }
+        }
+    }
+
+    pub fn clear_preview_restore_state(&mut self) {
+        self.osc_preview_active = false;
+        self.saved_colors = None;
+        if let Some(ref mut state) = self.creator_state {
+            state.osc_preview = false;
         }
     }
 
@@ -330,7 +352,9 @@ impl App {
                 Ok(mut coll) => {
                     coll.themes.push(entry);
                     match crate::collection::save_collection(&coll) {
-                        Ok(_) => self.status_message = Some(format!("Added '{}' to '{}'", title, name)),
+                        Ok(_) => {
+                            self.status_message = Some(format!("Added '{}' to '{}'", title, name))
+                        }
                         Err(e) => self.status_message = Some(format!("Error: {}", e)),
                     }
                 }
@@ -347,7 +371,7 @@ impl App {
             return;
         }
         match crate::collection::create_collection(&name) {
-            Ok(_) => self.add_to_collection(&name),
+            Ok(created) => self.add_to_collection(&created.name),
             Err(e) => {
                 self.status_message = Some(format!("Error: {}", e));
                 self.input_mode = InputMode::Normal;
@@ -406,6 +430,49 @@ impl App {
         self.screen = Screen::CreateMeta;
     }
 
+    #[cfg(test)]
+    pub fn test_default() -> Self {
+        let (tx, rx) = mpsc::channel();
+        Self {
+            screen: Screen::Browse,
+            input_mode: InputMode::Normal,
+            themes: Vec::new(),
+            selected: 0,
+            list_offset: 0,
+            search_input: String::new(),
+            active_query: None,
+            active_tag: None,
+            tag_cursor: 0,
+            sort: SortOrder::Popular,
+            dark_filter: None,
+            page: 1,
+            total_pages: 0,
+            total_results: 0,
+            loading: false,
+            error: None,
+            osc_preview_active: false,
+            saved_colors: None,
+            status_message: None,
+            should_quit: false,
+            bg_rx: rx,
+            bg_tx: tx,
+            collection_names: Vec::new(),
+            collection_popup_cursor: 0,
+            collection_name_input: String::new(),
+            collections_list: Vec::new(),
+            collections_cursor: 0,
+            collections_detail: None,
+            collections_theme_cursor: 0,
+            collections_viewing_themes: false,
+            collections_mode: CollectionsMode::Normal,
+            collections_input: String::new(),
+            creator_state: None,
+            create_meta_state: None,
+            mode_preference: None,
+            show_help: false,
+        }
+    }
+
     /// Ensure OSC colors are restored before exiting.
     pub fn cleanup(&mut self) {
         if self.osc_preview_active {
@@ -421,5 +488,143 @@ impl App {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::preview::SavedColors;
+    use crate::theme::GhosttyConfig;
+
+    fn dummy_theme(title: &str) -> GhosttyConfig {
+        GhosttyConfig {
+            id: String::new(),
+            slug: String::new(),
+            title: title.to_string(),
+            description: None,
+            raw_config: String::new(),
+            background: "#000000".to_string(),
+            foreground: "#ffffff".to_string(),
+            cursor_color: None,
+            cursor_text: None,
+            selection_bg: None,
+            selection_fg: None,
+            palette: Vec::new(),
+            font_family: None,
+            font_size: None,
+            cursor_style: None,
+            bg_opacity: None,
+            is_dark: true,
+            tags: Vec::new(),
+            source_url: None,
+            author_name: None,
+            author_url: None,
+            is_featured: false,
+            vote_count: 0,
+            view_count: 0,
+            download_count: 0,
+        }
+    }
+
+    #[test]
+    fn select_next_increments() {
+        let mut app = App::test_default();
+        app.themes = vec![dummy_theme("a"), dummy_theme("b"), dummy_theme("c")];
+        assert_eq!(app.selected, 0);
+        app.select_next();
+        assert_eq!(app.selected, 1);
+    }
+
+    #[test]
+    fn select_next_clamps_at_end() {
+        let mut app = App::test_default();
+        app.themes = vec![dummy_theme("a"), dummy_theme("b")];
+        app.selected = 1;
+        app.select_next();
+        assert_eq!(app.selected, 1);
+    }
+
+    #[test]
+    fn select_next_empty_themes_noop() {
+        let mut app = App::test_default();
+        app.select_next();
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn select_prev_decrements() {
+        let mut app = App::test_default();
+        app.themes = vec![dummy_theme("a"), dummy_theme("b")];
+        app.selected = 1;
+        app.select_prev();
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn select_prev_clamps_at_zero() {
+        let mut app = App::test_default();
+        app.select_prev();
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn toggle_dark_filter_cycles() {
+        let mut app = App::test_default();
+        assert_eq!(app.dark_filter, None);
+
+        // Can't call toggle_dark_filter() because it triggers fetch.
+        // Test the cycling logic directly.
+        app.dark_filter = match app.dark_filter {
+            None => Some(true),
+            Some(true) => Some(false),
+            Some(false) => None,
+        };
+        assert_eq!(app.dark_filter, Some(true));
+
+        app.dark_filter = match app.dark_filter {
+            None => Some(true),
+            Some(true) => Some(false),
+            Some(false) => None,
+        };
+        assert_eq!(app.dark_filter, Some(false));
+
+        app.dark_filter = match app.dark_filter {
+            None => Some(true),
+            Some(true) => Some(false),
+            Some(false) => None,
+        };
+        assert_eq!(app.dark_filter, None);
+    }
+
+    #[test]
+    fn selected_theme_returns_correct() {
+        let mut app = App::test_default();
+        app.themes = vec![dummy_theme("first"), dummy_theme("second")];
+        app.selected = 1;
+        assert_eq!(app.selected_theme().unwrap().title, "second");
+    }
+
+    #[test]
+    fn selected_theme_empty_returns_none() {
+        let app = App::test_default();
+        assert!(app.selected_theme().is_none());
+    }
+
+    #[test]
+    fn clear_preview_restore_state_resets_preview_flags() {
+        let mut app = App::test_default();
+        app.osc_preview_active = true;
+        app.saved_colors = Some(SavedColors);
+        app.creator_state = Some(crate::creator::CreatorState::new("Test"));
+        if let Some(ref mut state) = app.creator_state {
+            state.osc_preview = true;
+        }
+
+        app.clear_preview_restore_state();
+
+        assert!(!app.osc_preview_active);
+        assert!(app.saved_colors.is_none());
+        assert!(!app.creator_state.as_ref().is_some_and(|s| s.osc_preview));
     }
 }

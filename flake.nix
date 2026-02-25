@@ -11,19 +11,13 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        # Platform-specific native build inputs for reqwest's native-tls
-        darwinBuildInputs = with pkgs; [
-          darwin.apple_sdk.frameworks.Security
-          darwin.apple_sdk.frameworks.SystemConfiguration
-        ];
-
         linuxBuildInputs = with pkgs; [
           openssl
         ];
 
         platformBuildInputs =
-          if pkgs.stdenv.hostPlatform.isDarwin then darwinBuildInputs
-          else linuxBuildInputs;
+          if pkgs.stdenv.hostPlatform.isLinux then linuxBuildInputs
+          else [ ];
 
         platformNativeBuildInputs =
           if pkgs.stdenv.hostPlatform.isLinux then [ pkgs.pkg-config ]
@@ -33,7 +27,7 @@
         packages = {
           ghostty-styles = pkgs.rustPlatform.buildRustPackage {
             pname = "ghostty-styles";
-            version = "0.1.0";
+            version = "1.0.0";
 
             src = pkgs.lib.cleanSource ./.;
 
