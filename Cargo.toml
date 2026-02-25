@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 description = "A TUI for browsing and previewing Ghostty terminal themes"
 license = "MIT"
+authors = ["mcfearsome <jesse@mcfearsome.dev>"]
+repository = "https://github.com/mcfearsome/ghostty.styles.tui"
+readme = "README.md"
+keywords = ["ghostty", "terminal", "themes", "tui", "ratatui"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 ratatui = "0.29"
