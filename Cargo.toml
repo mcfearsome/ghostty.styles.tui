@@ -1,6 +1,6 @@
 [package]
 name = "ghostty-styles"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 description = "A TUI for browsing and previewing Ghostty terminal themes"
 license = "MIT"

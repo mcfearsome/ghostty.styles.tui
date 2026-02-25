@@ -27,7 +27,7 @@
         packages = {
           ghostty-styles = pkgs.rustPlatform.buildRustPackage {
             pname = "ghostty-styles";
-            version = "1.0.0";
+            version = "1.1.0";
 
             src = pkgs.lib.cleanSource ./.;
 
