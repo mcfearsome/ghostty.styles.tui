@@ -25,6 +25,8 @@ pub enum Screen {
     Detail,
     Confirm,
     Collections,
+    Create,
+    CreateMeta,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -46,6 +48,15 @@ pub enum InputMode {
 
 pub enum BgMessage {
     ConfigsLoaded(Result<ConfigResponse, String>),
+}
+
+pub struct CreateMetaState {
+    pub description: String,
+    pub tags: Vec<String>,
+    pub author_name: String,
+    pub field_index: usize, // 0=title, 1=description, 2=tags, 3=author, 4=actions
+    pub editing: bool,
+    pub tag_cursor: usize,
 }
 
 pub struct App {
@@ -81,6 +92,8 @@ pub struct App {
     pub collections_viewing_themes: bool,
     pub collections_mode: CollectionsMode,
     pub collections_input: String,
+    pub creator_state: Option<crate::creator::CreatorState>,
+    pub create_meta_state: Option<CreateMetaState>,
 }
 
 impl App {
@@ -119,6 +132,8 @@ impl App {
             collections_viewing_themes: false,
             collections_mode: CollectionsMode::Normal,
             collections_input: String::new(),
+            creator_state: None,
+            create_meta_state: None,
         }
     }
 
@@ -337,6 +352,30 @@ impl App {
                 self.collections_viewing_themes = true;
             }
         }
+    }
+
+    pub fn enter_creator(&mut self, title: String) {
+        self.creator_state = Some(crate::creator::CreatorState::new(title));
+        self.screen = Screen::Create;
+    }
+
+    pub fn enter_creator_from_theme(&mut self) {
+        if let Some(theme) = self.selected_theme() {
+            self.creator_state = Some(crate::creator::CreatorState::from_theme(theme));
+            self.screen = Screen::Create;
+        }
+    }
+
+    pub fn enter_create_meta(&mut self) {
+        self.create_meta_state = Some(CreateMetaState {
+            description: String::new(),
+            tags: Vec::new(),
+            author_name: String::new(),
+            field_index: 0,
+            editing: false,
+            tag_cursor: 0,
+        });
+        self.screen = Screen::CreateMeta;
     }
 
     /// Ensure OSC colors are restored before exiting.

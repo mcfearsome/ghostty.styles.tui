@@ -290,6 +290,7 @@ fn run_app(
             Screen::Browse => ui::render_browser(f, app),
             Screen::Detail | Screen::Confirm => ui::render_detail(f, app),
             Screen::Collections => ui::render_collections(f, app),
+            Screen::Create | Screen::CreateMeta => {} // TODO: render in Task 6
         })?;
 
         // Poll for events with a timeout so we can check background messages
@@ -313,6 +314,7 @@ fn run_app(
                     Screen::Detail => handle_detail_input(app, key.code),
                     Screen::Confirm => handle_confirm_input(app, key.code),
                     Screen::Collections => handle_collections_input(app, key.code),
+                    Screen::Create | Screen::CreateMeta => {} // TODO: input in Tasks 7/9
                 }
             }
         }
